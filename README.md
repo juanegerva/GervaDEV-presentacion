@@ -54,10 +54,10 @@ Si deseas clonar el proyecto y ejecutarlo localmente, sigue estos pasos:
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/usuario/repositorio.git
+git clone https://github.com/juanegerva/GervaDEV-presentacion.git
 
 # Acceder al directorio del proyecto
-cd repositorio
+cd GervaDEV-presentacion
 
 # Instalar dependencias
 npm install
