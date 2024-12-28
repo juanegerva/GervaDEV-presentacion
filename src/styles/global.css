@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+    scroll-behavior: smooth;
+  }
+  
+  .custom-arrow-left,
+.custom-arrow-right {
+  color: #fff;
+  font-size: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  position: absolute;
+  z-index: 10;
+}
+
+.custom-arrow-left {
+  left: -30px;
+}
+
+.custom-arrow-right {
+  right: -30px;
+}
+
+.custom-pagination .swiper-pagination-bullet {
+  background-color: #fff !important;
+  width: 10px;
+  height: 10px;
+  margin: 0 5px;
+}
+
+.custom-pagination .swiper-pagination-bullet-active {
+  background-color: #007bff !important;
+}
+
+/* Asegura que la paginación esté separada del carrusel */
+.custom-pagination {
+  margin-top: 2rem;
+  position: static !important;
+}
+
+.custom-arrow-left,
+.custom-arrow-right {
+  color: #fff;
+  font-size: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  position: absolute;
+  z-index: 10;
+}
+
+/* Alineación para móviles */
+@media (max-width: 640px) {
+  .custom-arrow-left {
+    left: 5px;
+  }
+  .custom-arrow-right {
+    right: 5px;
+  }
+}
+
+/* Alineación para tablets */
+@media (min-width: 640px) and (max-width: 1024px) {
+  .custom-arrow-left {
+    left: 15px;
+  }
+  .custom-arrow-right {
+    right: 15px;
+  }
+}
+
+@media (max-width: 640px) {
+  .footer {
+    padding: 2rem 1rem;
+  }
+  .footer a {
+    font-size: 1.5rem;
+  }
+  .footer .text-sm {
+    font-size: 0.8rem;
+  }
+}
