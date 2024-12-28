@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
-      external: ['framer-motion']  // Asegura que framer-motion se trate como dependencia externa
+      external: ['framer-motion']['react-icons'] // Asegura que framer-motion se trate como dependencia externa
     }
   },
   server: {
