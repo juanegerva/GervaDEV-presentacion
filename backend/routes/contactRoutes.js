@@ -28,10 +28,10 @@ router.get('/csrf-token', csrfProtection, (req, res) => {
 router.post('/send', csrfProtection, async (req, res) => {
   const { name, email, phone, message } = req.body;
 
-  if (honeypot) {
+  if (req.body.honeypot) {
     console.warn('🚨 Intento de spam detectado.');
     return res.status(403).json({ error: 'Acción bloqueada por seguridad.' });
-  }  
+  } 
 
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Todos los campos son obligatorios' });

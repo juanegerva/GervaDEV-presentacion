@@ -1,83 +1,61 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
-const cors = require('cors');
 const csrf = require('csurf');
+const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 const helmet = require('helmet');
-const contactRoutes = require('./routes/contactRoutes');
-require('dotenv').config({ path: '../.env' });  // ✅ Correcto
-
+require('dotenv').config();
 
 const app = express();
 
-// Middleware de seguridad
-app.use(helmet());
-const allowedOrigins = ['https://gerva-dev.netlify.app', 'http://localhost:5173'];
-
+// CORS con cookies habilitadas
 app.use(cors({
-  origin: (origin, callback) => {
-    if (allowedOrigins.includes(origin) || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('No permitido por CORS'));
-    }
-  },
-  credentials: true,
+  origin: 'http://localhost:5173',  // Asegúrate de poner el dominio del frontend
+  methods: ['GET', 'POST'],
+  credentials: true,  // Permitir envío de cookies
 }));
 
-
-app.use(bodyParser.json());
+app.use(helmet());
 app.use(cookieParser());
+app.use(bodyParser.json());
 
-// Configuración CSRF
-const csrfProtection = csrf({ cookie: true });
-
-// 🔹 Ruta directa para obtener el token CSRF (sin aplicar CSRF a esta ruta)
-app.get('/csrf-token', csrfProtection, (req, res) => {
-  res.status(200).json({ csrfToken: req.csrfToken() });
+// CSRF Protection con opciones de cookies
+const csrfProtection = csrf({
+  cookie: {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'strict',
+    maxAge: 60 * 60 * 1000,  // Asegura compatibilidad con cross-origin
+  }
 });
 
-// 🔹 Aplica CSRF solo a rutas POST después de definir la ruta del token
-app.post('/send', csrfProtection, (req, res) => {
+// Middleware CSRF
+app.use(csrfProtection);
 
-  const csrfTokenHeader = req.headers['csrf-token'];
-
-  console.log('🔑 Token CSRF recibido:', csrfTokenHeader);
-  console.log('🔒 Token CSRF esperado:', req.csrfToken());
-
-  if (!csrfTokenHeader || csrfTokenHeader !== req.csrfToken()) {
-    return res.status(403).json({ error: 'Token CSRF inválido o ausente' });
-  }
-
-  const { name, email, message, honeypot } = req.body;
-
-  if (honeypot) {
-    return res.status(403).json({ error: 'Acción bloqueada por seguridad.' });
-  }
-
-  console.log('✅ Formulario recibido:', { name, email, message });
-  res.status(200).json({ message: 'Correo enviado con éxito' });
-
-  if (!name || !email || !message) {
-    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
-  }
-
+// Endpoint para obtener el token CSRF (SOLO UNA VEZ)
+app.get('/csrf-token', (req, res) => {
+  const csrfToken = req.csrfToken();
+  res.json({ csrfToken });
+  console.log('🔑 Token CSRF generado:', csrfToken);
 });
 
-// Rutas de contacto (correo)
-app.use('/', contactRoutes);
+// Ruta POST con protección CSRF
+app.post('/send', (req, res) => {
+  console.log('🔑 Token CSRF recibido:', req.headers['csrf-token']);
+  console.log('🔒 Token CSRF esperado:', req.cookies['_csrf']);
+});
 
-// Middleware global para manejar errores
+// Manejo de errores global
 app.use((err, req, res, next) => {
   if (err.code === 'EBADCSRFTOKEN') {
+    console.error('❌ Error CSRF:', err.message);
     return res.status(403).json({ error: 'Token CSRF inválido o ausente' });
   }
-  console.error('❌ Error en el servidor:', err);
+  console.error(err.stack);
   res.status(500).json({ error: 'Error interno del servidor' });
 });
 
-// Iniciar el servidor
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
