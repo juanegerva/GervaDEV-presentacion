@@ -3,7 +3,6 @@ const nodemailer = require('nodemailer');
 const router = express.Router();
 require('dotenv').config();
 
-// Ruta de envío de formulario
 router.post('/send', async (req, res) => {
   const { name, email, message, phone } = req.body;
 
@@ -14,16 +13,16 @@ router.post('/send', async (req, res) => {
   console.log('✅ Formulario recibido:', { name, email, phone, message });
 
   try {
-    // Configuración de nodemailer
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
     });
 
-    // Contenido del email
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_TO,
@@ -36,15 +35,15 @@ router.post('/send', async (req, res) => {
       `,
     };
 
-    // Enviar correo
-    await transporter.sendMail(mailOptions);
-    console.log('📩 Correo enviado con éxito');
+    const info = await transporter.sendMail(mailOptions);
+    console.log('📩 Correo enviado con éxito:', info.response);
 
     res.status(200).json({ message: 'Correo enviado correctamente' });
   } catch (error) {
-    console.error('❌ Error al enviar el correo:', error);
+    console.error('❌ Error al enviar el correo:', error.message);
     res.status(500).json({ error: 'Error al enviar el correo' });
   }
 });
 
 module.exports = router;
+
