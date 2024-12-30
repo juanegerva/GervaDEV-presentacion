@@ -30,15 +30,20 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 
 // Configuración CSRF
-const csrfProtection = csrf({ cookie: true });
+const csrfProtection = csrf({ cookie: { httpOnly: true, secure: true, sameSite: 'Strict' } });
 app.use(csrfProtection);
 
 // Token CSRF
 app.get('/csrf-token', (req, res) => {
   const token = req.csrfToken();
   console.log('🔑 Token CSRF generado:', token);
-  res.cookie('_csrf', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
-  res.json({ csrfToken: token });
+  res.cookie('_csrf', req.csrfToken(), {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'Strict',  // Evita ataques CSRF desde otros dominios
+    path: '/',
+  });
+  res.json({ csrfToken: req.csrfToken() });
 });
 
 // Rutas de contacto
