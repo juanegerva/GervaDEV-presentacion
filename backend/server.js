@@ -12,10 +12,19 @@ const app = express();
 
 // Middleware de seguridad
 app.use(helmet());
+const allowedOrigins = ['https://gerva-dev.netlify.app', 'http://localhost:5173'];
+
 app.use(cors({
-  origin: 'http://localhost:5173',  // React frontend
-  credentials: true,  // Permitir cookies
+  origin: (origin, callback) => {
+    if (allowedOrigins.includes(origin) || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('No permitido por CORS'));
+    }
+  },
+  credentials: true,
 }));
+
 
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -29,7 +38,31 @@ app.get('/csrf-token', csrfProtection, (req, res) => {
 });
 
 // 🔹 Aplica CSRF solo a rutas POST después de definir la ruta del token
-app.post('*', csrfProtection);
+app.post('/send', csrfProtection, (req, res) => {
+
+  const csrfTokenHeader = req.headers['csrf-token'];
+
+  console.log('🔑 Token CSRF recibido:', csrfTokenHeader);
+  console.log('🔒 Token CSRF esperado:', req.csrfToken());
+
+  if (!csrfTokenHeader || csrfTokenHeader !== req.csrfToken()) {
+    return res.status(403).json({ error: 'Token CSRF inválido o ausente' });
+  }
+
+  const { name, email, message, honeypot } = req.body;
+
+  if (honeypot) {
+    return res.status(403).json({ error: 'Acción bloqueada por seguridad.' });
+  }
+
+  console.log('✅ Formulario recibido:', { name, email, message });
+  res.status(200).json({ message: 'Correo enviado con éxito' });
+
+  if (!name || !email || !message) {
+    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+  }
+
+});
 
 // Rutas de contacto (correo)
 app.use('/', contactRoutes);
