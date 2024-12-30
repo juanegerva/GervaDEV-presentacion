@@ -8,41 +8,43 @@ require('dotenv').config();
 
 const app = express();
 
-// Seguridad básica con Helmet
+// Seguridad con Helmet
 app.use(helmet());
 
-// Habilitar CORS con cookies
+// Configuración CORS para permitir cookies
 app.use(
   cors({
-    origin: 'http://localhost:5173',  // Asegúrate de que coincida con tu frontend
-    credentials: true,  // Permitir cookies
+    origin: 'http://localhost:5173',  // Asegúrate que el origen sea el correcto
+    credentials: true,  // Importante para enviar cookies
   })
 );
 
-// Parsear JSON y cookies
+// Middleware para parsear JSON y cookies
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-// Configuración correcta del middleware CSRF (con opción de ignorar rutas específicas)
+// Configuración CSRF - CSRF siempre con cookie
 const csrfProtection = csrf({ cookie: true });
 app.use(csrfProtection);
 
-// Ruta para obtener el token CSRF y almacenarlo correctamente
+// Obtener y enviar el token CSRF (ÚNICA GENERACIÓN)
 app.get('/csrf-token', (req, res) => {
   const csrfToken = req.csrfToken();
   console.log('🔑 Token CSRF generado:', csrfToken);
 
+  // Enviar la cookie con el token CSRF
   res.cookie('_csrf', csrfToken, {
     httpOnly: true,
     secure: true,
     sameSite: 'Strict',
-    path: '/',
+    path: '/',  // El token es válido para toda la app
   });
 
+  // También enviar el token en JSON (por si se necesita)
   res.json({ csrfToken });
 });
 
-// Ruta de prueba para enviar formulario con CSRF
+// Ruta POST con Validación CSRF
 app.post('/send', csrfProtection, (req, res) => {
   const { name, email, message } = req.body;
 
@@ -54,7 +56,7 @@ app.post('/send', csrfProtection, (req, res) => {
   res.status(200).json({ message: 'Correo enviado con éxito' });
 });
 
-// Middleware global para manejar errores de CSRF
+// Middleware global para errores CSRF
 app.use((err, req, res, next) => {
   if (err.code === 'EBADCSRFTOKEN') {
     console.log('❌ Error CSRF: token csrf no válido.');
