@@ -20,12 +20,14 @@ const transporter = nodemailer.createTransport({
 
 // Ruta para obtener el token CSRF
 router.get('/csrf-token', csrfProtection, (req, res) => {
-  res.cookie('_csrf', req.csrfToken(), {
+  const csrfToken = req.csrfToken();
+  res.cookie('_csrf', csrfToken, {
     httpOnly: true,
     secure: true,
     sameSite: 'Strict',
   });
-  res.json({ csrfToken: req.csrfToken() });
+  res.json({ csrfToken });
+  console.log('🔑 Token CSRF generado:', csrfToken);
 });
 
 // Ruta para enviar formulario
