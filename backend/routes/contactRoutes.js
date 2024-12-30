@@ -3,8 +3,7 @@ const router = express.Router();
 const csrf = require('csurf');
 const cookieParser = require('cookie-parser');
 const nodemailer = require('nodemailer');
-require('dotenv').config({ path: '../.env' });  // ✅ Correcto
-
+require('dotenv').config({ path: '../.env' });
 
 // Middleware para cookies y CSRF
 router.use(cookieParser());
@@ -19,19 +18,19 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Ruta para obtener el token CSRF (protegida)
+// Ruta para obtener el token CSRF
 router.get('/csrf-token', csrfProtection, (req, res) => {
+  res.cookie('_csrf', req.csrfToken(), {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'Strict',
+  });
   res.json({ csrfToken: req.csrfToken() });
 });
 
-// Ruta para enviar formulario (protegida por CSRF)
+// Ruta para enviar formulario
 router.post('/send', csrfProtection, async (req, res) => {
   const { name, email, phone, message } = req.body;
-
-  if (req.body.honeypot) {
-    console.warn('🚨 Intento de spam detectado.');
-    return res.status(403).json({ error: 'Acción bloqueada por seguridad.' });
-  } 
 
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Todos los campos son obligatorios' });
