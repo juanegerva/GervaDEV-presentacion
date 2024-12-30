@@ -1,5 +1,5 @@
 import testimonials from './data/testimonialsData';
-import TestimonialCard from '../components/TestimonialCard';
+import TestimonialCard from './TestimonialCard';
 
 const Testimonials = () => {
   return (
