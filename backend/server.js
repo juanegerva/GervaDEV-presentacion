@@ -7,8 +7,7 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const port = 5000;
 
-// Middleware CSRF
-const csrfProtection = csrf({ cookie: true });
+
 
 // Configuración de CORS
 app.use(cors({
@@ -20,20 +19,35 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 
 // Ruta para obtener el token CSRF
-app.get('/csrf-token', csrfProtection, (req, res) => {
-  const csrfToken = req.csrfToken();
-  console.log('🔑 Token CSRF generado:', csrfToken);
-  
-  // Establece la cookie CSRF correctamente
-  res.cookie('_csrf', csrfToken, {
+const csrfProtection = csrf({
+  cookie: {
     httpOnly: true,
     secure: true,
     sameSite: 'Strict',
     path: '/',  // Aplica para todas las rutas
-  });
-
-  res.json({ csrfToken });
+  },
 });
+
+// Ruta para obtener el token CSRF
+app.get('/csrf-token', (req, res) => {
+  const csrfToken = req.csrfToken();
+
+  if (!req.cookies._csrf) {
+    // Solo genera una nueva cookie si no existe
+    res.cookie('_csrf', csrfToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Strict',
+      path: '/',
+    });
+    console.log('🔑 Token CSRF generado (Nuevo):', csrfToken);
+  } else {
+    console.log('🔑 Token CSRF existente (Cookie):', req.cookies._csrf);
+  }
+
+  res.json({ csrfToken: req.cookies._csrf || csrfToken });
+});
+
 
 // Ruta de envío del formulario
 app.post('/send', csrfProtection, (req, res) => {
