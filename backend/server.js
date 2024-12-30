@@ -3,64 +3,52 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const csrf = require('csurf');
 const cookieParser = require('cookie-parser');
-const helmet = require('helmet');
-const contactRoutes = require('./routes/contactRoutes');
-require('dotenv').config();
 
 const app = express();
+const port = 5000;
 
-// Seguridad con Helmet
-app.use(
-  helmet({
-    contentSecurityPolicy: false, // Desactivar CSP para evitar bloqueos durante desarrollo
-  })
-);
+// Middleware CSRF
+const csrfProtection = csrf({ cookie: true });
 
-// Configuración CORS para permitir el frontend
-const allowedOrigins = ['http://localhost:5173', 'https://mi-frontend.netlify.app'];
-app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-  })
-);
+// Configuración de CORS
+app.use(cors({
+  origin: 'http://localhost:5173',  // Asegúrate de usar la URL correcta
+  credentials: true,  // Permitir envío de cookies
+}));
 
-// Middleware para parsear JSON y cookies
 app.use(bodyParser.json());
 app.use(cookieParser());
 
-// Configuración CSRF
-const csrfProtection = csrf({ cookie: { httpOnly: true, secure: true, sameSite: 'Strict' } });
-app.use(csrfProtection);
-
-// Token CSRF
-app.get('/csrf-token', (req, res) => {
-  const token = req.csrfToken();
-  console.log('🔑 Token CSRF generado:', token);
-  res.cookie('_csrf', req.csrfToken(), {
+// Ruta para obtener el token CSRF
+app.get('/csrf-token', csrfProtection, (req, res) => {
+  const csrfToken = req.csrfToken();
+  console.log('🔑 Token CSRF generado:', csrfToken);
+  
+  // Establece la cookie CSRF correctamente
+  res.cookie('_csrf', csrfToken, {
     httpOnly: true,
     secure: true,
-    sameSite: 'Strict',  // Evita ataques CSRF desde otros dominios
-    path: '/',
+    sameSite: 'Strict',
+    path: '/',  // Aplica para todas las rutas
   });
-  res.json({ csrfToken: req.csrfToken() });
+
+  res.json({ csrfToken });
 });
 
-// Rutas de contacto
-app.use('/send', contactRoutes);
-
-// Manejador de errores CSRF
-app.use((err, req, res, next) => {
-  if (err.code === 'EBADCSRFTOKEN') {
-    console.error('❌ Error CSRF: token csrf no válido');
-    res.status(403).json({ error: 'Token CSRF inválido o ausente' });
-  } else {
-    next(err);
+// Ruta de envío del formulario
+app.post('/send', csrfProtection, (req, res) => {
+  const { name, email, message } = req.body;
+  
+  if (!name || !email || !message) {
+    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
   }
+
+  console.log('🔑 Token CSRF recibido:', req.headers['csrf-token']);
+  console.log('🔒 Token CSRF esperado (cookie):', req.cookies._csrf);
+
+  res.json({ message: 'Correo enviado con éxito' });
 });
 
-// Iniciar el servidor
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+app.listen(port, () => {
+  console.log(`✅ Servidor corriendo en http://localhost:${port}`);
 });
