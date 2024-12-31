@@ -17,12 +17,13 @@ const allowedOrigins = [
 // Configuración de seguridad con Helmet
 app.use(helmet());
 
-// Configuración de CORS
+// Configuración de CORS Dinámico
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.log(`❌ Bloqueado por CORS: ${origin}`);
       callback(new Error('No permitido por CORS'));
     }
   },
@@ -41,7 +42,11 @@ app.use(csrfProtection);
 app.get('/csrf-token', (req, res) => {
   const csrfToken = req.csrfToken();
   console.log('🔑 Token CSRF generado:', csrfToken);
-  res.cookie('_csrf', csrfToken, { httpOnly: true, secure: true, sameSite: 'Strict' });
+  res.cookie('_csrf', csrfToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'Strict',
+  });
   res.status(200).json({ csrfToken });
 });
 
@@ -54,7 +59,6 @@ app.post('/send', (req, res) => {
   }
 
   console.log('Formulario recibido:', { name, email, message });
-
   res.status(200).json({ message: 'Correo enviado con éxito' });
 });
 
