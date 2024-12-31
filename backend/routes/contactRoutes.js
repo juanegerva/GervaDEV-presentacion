@@ -10,8 +10,9 @@ router.post('/send', async (req, res) => {
     return res.status(400).json({ error: 'Todos los campos son obligatorios' });
   }
 
-  console.log('✅ Formulario recibido:', { name, email, phone, message });
-
+  console.log('📩 Enviando correo a:', process.env.EMAIL_TO);  // Para ver si se reconoce el destinatario
+  console.log('📧 Mensaje recibido:', { name, email, message });
+  
   try {
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
@@ -25,7 +26,7 @@ router.post('/send', async (req, res) => {
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_TO,
+      to: process.env.EMAIL_TO || "juangervat@gmail.com",
       subject: 'Nuevo Mensaje desde el Formulario',
       text: `
         Nombre: ${name}
