@@ -10,7 +10,7 @@ const app = express();
 // --- Configuración de seguridad ---
 app.use(helmet());
 app.use(cors({
-  origin: 'http://localhost:5173',  // Asegúrate que coincida con el front
+  origin: "https://gerva-dev.netlify.app/" || "http://localhost:5173/#contact",  // Asegúrate que coincida con el front
   credentials: true
 }));
 app.use(bodyParser.json());

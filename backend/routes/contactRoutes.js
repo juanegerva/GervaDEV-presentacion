@@ -10,8 +10,6 @@ router.post('/send', async (req, res) => {
     return res.status(400).json({ error: 'Todos los campos son obligatorios' });
   }
 
-  console.log('📩 Enviando correo a:', process.env.EMAIL_TO);  // Para ver si se reconoce el destinatario
-  console.log('📧 Mensaje recibido:', { name, email, message });
   
   try {
     const transporter = nodemailer.createTransport({
@@ -38,6 +36,7 @@ router.post('/send', async (req, res) => {
 
     const info = await transporter.sendMail(mailOptions);
     console.log('📩 Correo enviado con éxito:', info.response);
+    console.log('📬 Verificando respuesta del servidor SMTP:', info);
 
     res.status(200).json({ message: 'Correo enviado correctamente' });
   } catch (error) {
@@ -46,5 +45,6 @@ router.post('/send', async (req, res) => {
   }
 });
 
-module.exports = router;
 
+
+module.exports = router;
