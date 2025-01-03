@@ -10,24 +10,26 @@ const app = express();
 
 // Lista de orígenes permitidos
 const allowedOrigins = [
-  'https://gerva-dev.netlify.app'
+  'https://gerva-dev.netlify.app', // URL del frontend en Netlify
+  'http://localhost:5173',         // Para desarrollo local
 ];
 
 // Configuración de seguridad con Helmet
 app.use(helmet());
 
-// Configuración de CORS Dinámico
+
+// Configuración de CORS
 app.use(cors({
-  origin: (origin, callback) => {
+  origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
+      callback(null, true);  // Permitir la solicitud
     } else {
-      console.log(`❌ Bloqueado por CORS: ${origin}`);
-      callback(new Error('No permitido por CORS'));
+      callback(new Error('No autorizado por CORS'));
     }
   },
-  credentials: true,
+  credentials: true,  // Permitir cookies y credenciales
 }));
+
 
 // Middleware
 app.use(bodyParser.json());
@@ -38,7 +40,7 @@ const csrfProtection = csrf({ cookie: true });
 app.use(csrfProtection);
 
 // Ruta para devolver el token CSRF
-app.get('https://gerva-dev.netlify.app/csrf-token', (req, res) => {
+app.get('/csrf-token', (req, res) => {
   const csrfToken = req.csrfToken();
   console.log('🔑 Token CSRF generado:', csrfToken);
   res.cookie('_csrf', csrfToken, {
