@@ -38,7 +38,7 @@ const csrfProtection = csrf({ cookie: true });
 app.use(csrfProtection);
 
 // Ruta para devolver el token CSRF
-app.get('/csrf-token', (req, res) => {
+app.get('https://gerva-dev.netlify.app/csrf-token', (req, res) => {
   const csrfToken = req.csrfToken();
   console.log('🔑 Token CSRF generado:', csrfToken);
   res.cookie('_csrf', csrfToken, {
