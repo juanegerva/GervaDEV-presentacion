@@ -10,29 +10,28 @@ const app = express();
 
 // Lista de orígenes permitidos
 const allowedOrigins = [
-  'https://gerva-dev.netlify.app', // URL del frontend en Netlify
-  'http://localhost:5173',         // Para desarrollo local
-  'https://mi-backend-u1pz.onrender.com'
+  'https://gerva-dev.netlify.app',
+  'http://localhost:5173',
+  'https://mi-backend-u1pz.onrender.com',
 ];
 
-// Configuración de seguridad con Helmet
-app.use(helmet());
+// Permitir subdominios de Netlify dinámicamente
+const dynamicNetlifyOrigin = /^https:\/\/[a-zA-Z0-9-]+--gerva-dev\.netlify\.app$/;
 
-// Configuración de CORS
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin) {
-      return callback(null, true);  // Permitir solicitudes sin origen (Postman, Curl, etc.)
-    }
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);  // Permitir origen válido
+    if (!origin || allowedOrigins.includes(origin) || dynamicNetlifyOrigin.test(origin)) {
+      callback(null, true);
     } else {
       console.error(`❌ Origen no autorizado: ${origin}`);
       callback(new Error('No autorizado por CORS'));
     }
   },
-  credentials: true,  // Permitir cookies y credenciales
+  credentials: true,
 }));
+
+
+
 
 // Middleware
 app.use(bodyParser.json());
