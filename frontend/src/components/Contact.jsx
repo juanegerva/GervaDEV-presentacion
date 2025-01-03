@@ -18,7 +18,7 @@ const Contact = () => {
   const [csrfToken, setCsrfToken] = useState('');
   const [loading, setLoading] = useState(false);
 
-  
+
 
   // Obtener CSRF Token
   useEffect(() => {
@@ -55,12 +55,14 @@ const Contact = () => {
     return true;
   };
 
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const csrfToken = localStorage.getItem('csrfToken')
     if (!validateForm()) return;
 
     setLoading(true);
-    
+    console.log("entre al POST")
     try {
       const response = await fetch(`${BACKEND_URL}/send`, {
         method: 'POST',
