@@ -48,8 +48,8 @@ app.get('/csrf-token', (req, res) => {
   console.log('🔑 Token CSRF generado:', csrfToken);
   
   // Se envía una cookie accesible por el frontend
-  res.cookie('XSRF-TOKEN', csrfToken, {
-    httpOnly: false,  // Permitir acceso desde frontend
+  res.cookie('_csrf', csrfToken, {
+    httpOnly: true,  // Permitir acceso desde frontend
     secure: true,
     sameSite: 'Strict',
   });

@@ -63,6 +63,8 @@ const Contact = () => {
 
     setLoading(true);
     console.log("entre al POST")
+    console.log(csrfToken)
+    
     try {
       const response = await fetch(`${BACKEND_URL}/send`, {
         method: 'POST',
