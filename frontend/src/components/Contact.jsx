@@ -64,12 +64,12 @@ const Contact = () => {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-     
+  
     if (!validateForm()) return;
   
     setLoading(true);
     
-    const csrfToke = csrfToken || localStorage.getItem('csrfToken');  // Reforzar lectura
+    const csrfToke = csrfToken || localStorage.getItem('csrfToken');  // Refuerzo por si el estado no guarda el token correctamente.
   
     console.log("🔑 Token CSRF antes del POST:", csrfToke);
   
@@ -84,7 +84,7 @@ const Contact = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'CSRF-Token': csrfToke,
+          'CSRF-Token': csrfToke,  // Enviar token desde el encabezado
         },
         body: JSON.stringify(formData),
         credentials: 'include',
@@ -106,6 +106,7 @@ const Contact = () => {
       setLoading(false);
     }
   };
+  
   
 
   return (

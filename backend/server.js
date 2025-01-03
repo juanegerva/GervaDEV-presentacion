@@ -39,8 +39,16 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 
 // Configuración CSRF
-const csrfProtection = csrf({ cookie: true });
+const csrfProtection = csrf({
+  cookie: true,
+  value: (req) => {
+    return req.headers['csrf-token'] || req.body._csrf || req.query._csrf || '';
+  },
+});
 app.use(csrfProtection);
+
+
+
 
 // Ruta para devolver el token CSRF
 app.get('/csrf-token', (req, res) => {
@@ -49,10 +57,11 @@ app.get('/csrf-token', (req, res) => {
   
   // Se envía una cookie accesible por el frontend
   res.cookie('_csrf', csrfToken, {
-    httpOnly: true,  // Permitir acceso desde frontend
+    httpOnly: true,
     secure: true,
-    sameSite: 'Strict',
+    sameSite: 'Lax',
   });
+  
 
   res.status(200).json({ csrfToken });
 });
@@ -63,6 +72,7 @@ app.post('/send', (req, res) => {
   const { name, email, message } = req.body;
 
   if (!csrfToken) {
+    console.error('❌ Token CSRF no encontrado en encabezado.');
     return res.status(403).json({ error: 'Token CSRF no encontrado' });
   }
 
@@ -71,6 +81,7 @@ app.post('/send', (req, res) => {
 
   res.status(200).json({ message: 'Correo enviado con éxito' });
 });
+
 
 
 // Middleware de manejo de errores CSRF
