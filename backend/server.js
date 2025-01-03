@@ -59,7 +59,7 @@ app.get('/csrf-token', (req, res) => {
   res.cookie('_csrf', csrfToken, {
     httpOnly: true,
     secure: true,
-    sameSite: 'Lax',
+    sameSite: 'None',
   });
   
 
