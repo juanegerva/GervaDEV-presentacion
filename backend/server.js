@@ -92,6 +92,12 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
+app.use((req, res, next) => {
+  console.log("🔍 Token CSRF recibido en el servidor:", req.headers['csrf-token']);
+  next();
+});
+
+
 // Puerto de escucha
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {

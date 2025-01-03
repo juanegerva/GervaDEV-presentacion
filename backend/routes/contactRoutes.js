@@ -3,14 +3,13 @@ const nodemailer = require('nodemailer');
 const router = express.Router();
 require('dotenv').config();
 
-router.post('/send', async (req, res) => {
+router.post('/send', csrfProtection, async (req, res) => {
   const { name, email, message, phone } = req.body;
 
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Todos los campos son obligatorios' });
   }
 
-  
   try {
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
@@ -36,14 +35,13 @@ router.post('/send', async (req, res) => {
 
     const info = await transporter.sendMail(mailOptions);
     console.log('📩 Correo enviado con éxito:', info.response);
-    console.log('📬 Verificando respuesta del servidor SMTP:', info);
-
     res.status(200).json({ message: 'Correo enviado correctamente' });
   } catch (error) {
     console.error('❌ Error al enviar el correo:', error.message);
     res.status(500).json({ error: 'Error al enviar el correo' });
   }
 });
+
 
 
 
