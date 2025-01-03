@@ -9,7 +9,7 @@ function configureSecurity(app) {
 
   // Configuración CORS (Permitir solo frontend específico)
   app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: 'https://gerva-dev.netlify.app',
     methods: ['GET', 'POST'],
     credentials: true,
   }));

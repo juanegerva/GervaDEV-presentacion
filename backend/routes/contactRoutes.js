@@ -24,7 +24,7 @@ router.post('/send', async (req, res) => {
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_TO || "juangervat@gmail.com",
+      to: process.env.EMAIL_TO || "juanegerva@gmail.com",
       subject: 'Nuevo Mensaje desde el Formulario',
       text: `
         Nombre: ${name}

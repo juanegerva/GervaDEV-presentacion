@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { toast, ToastContainer } from 'react-toastify';
 import DOMPurify from 'dompurify';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Field from './Field';  // Importamos el nuevo componente
 
-// Validaciones regex
-const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-const validateName = (name) => /^[a-zA-ZÀ-ÿ\s]{3,50}$/.test(name);
-const validateMessage = (message) => message.length >= 10;
-const validatePhone = (phone) => /^[0-9\s+]{7,15}$/.test(phone) || phone === '';
+// URL del backend (Render)
+const BACKEND_URL = 'https://mi-backend-u1pz.onrender.com'; // No localhost:5000
+
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -17,208 +14,171 @@ const Contact = () => {
     email: '',
     phone: '',
     message: '',
-    honeypot: '',
   });
   const [csrfToken, setCsrfToken] = useState('');
-  const [errors, setErrors] = useState({});
-  const [touched, setTouched] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Obtener el token CSRF
-  useEffect(() => {
-    const fetchCsrfToken = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/csrf-token', {
-          method: 'GET',
-          credentials: 'include',  // IMPORTANTE para enviar cookies
-        });
-        const data = await response.json();
-        setCsrfToken(data.csrfToken);  // Guardar token
-      } catch (error) {
-        console.error('Error al obtener el token CSRF:', error);
-      }
-    };
-    fetchCsrfToken();
-  }, []);
   
 
-  // Validar campos
-  const validateField = (name, value) => {
-    switch (name) {
-      case 'name':
-        return validateName(value)
-          ? ''
-          : 'El nombre debe tener entre 3 y 50 caracteres y solo letras.';
-      case 'email':
-        return validateEmail(value) ? '' : 'Introduce un email válido.';
-      case 'phone':
-        return validatePhone(value)
-          ? ''
-          : 'El teléfono debe contener solo números (7-15 dígitos).';
-      case 'message':
-        return validateMessage(value)
-          ? ''
-          : 'El mensaje debe tener al menos 10 caracteres.';
-      case 'honeypot':
-        return value ? 'Acción bloqueada por seguridad.' : '';
-      default:
-        return '';
-    }
-  };
+  // Obtener CSRF Token
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      console.log("🔑 entre aca al fetch");
+      try {
+        const response = await fetch(`${BACKEND_URL}/csrf-token`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        const data = await response.json();
+        setCsrfToken(data.csrfToken);
+        console.log('🔑 Token CSRF recibido:', data.csrfToken);
+      } catch (error) {
+        console.error('❌ Error al obtener el token CSRF:', error);
+      }
+    };
+
+    fetchCsrfToken();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     const sanitizedValue = DOMPurify.sanitize(value);
     setFormData({ ...formData, [name]: sanitizedValue });
+  };
 
-    if (touched[name]) {
-      const errorMessage = validateField(name, sanitizedValue);
-      setErrors({ ...errors, [name]: errorMessage });
+  const validateForm = () => {
+    const { name, email, message } = formData;
+    if (!name || !email || !message) {
+      toast.error('Todos los campos obligatorios deben ser completados.');
+      return false;
     }
+    return true;
   };
 
-  const handleBlur = (e) => {
-    const { name, value } = e.target;
-    setTouched({ ...touched, [name]: true });
-    const errorMessage = validateField(name, value);
-    setErrors({ ...errors, [name]: errorMessage });
-  };
-  
-  
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
 
-    const validationErrors = {};
-    Object.keys(formData).forEach((key) => {
-      const error = validateField(key, formData[key]);
-      if (error) validationErrors[key] = error;
-    });
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      toast.error('Por favor, completa los campos correctamente.');
-      return;
-    }
-
-    if (formData.honeypot) {
-      toast.error('Acción bloqueada por seguridad.');
-      return;
-    }
-
-    setIsLoading(true);  // Inicia animación de carga
-
+    setLoading(true);
+    
     try {
-      const response = await fetch('http://localhost:5000/send', {
+      const response = await fetch(`${BACKEND_URL}/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'CSRF-Token': csrfToken,  // Enviar el token CSRF
+          'CSRF-Token': csrfToken,
         },
-        credentials: 'include',  // Importante para enviar cookies
         body: JSON.stringify(formData),
+        credentials: 'include',
       });
-  
+
+      const data = await response.json();
+    
+
       if (response.ok) {
-        toast.success('¡Correo enviado con éxito!',  {
-          position: 'top-center',  // Centrar la notificación
-          autoClose: 2000,
-          closeOnClick: true,
-          pauseOnHover: true,
-          
-         
-      draggable: true,
-        });
+        toast.success('¡Correo enviado con éxito!');
         setFormData({ name: '', email: '', phone: '', message: '' });
       } else {
-        toast.error('Hubo un problema al enviar el correo.');
+        toast.error(data.error || 'Error al enviar el formulario.');
       }
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error al enviar el correo.', {
-        position: 'top-center',  // También centrado para errores
-        autoClose: 2000,
-      });
-    }finally {
-      setIsLoading(false);  // Restablece el botón siempre
+      console.error('❌ Error:', error);
+      toast.error('Error al enviar el formulario.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <section id="contact" className="bg-gray-900 text-white min-h-screen flex items-center justify-center py-20">
+    <section
+      id="contact"
+      className="bg-gray-900 text-white min-h-screen flex items-center justify-center py-16"
+    >
       <motion.div
-        className="max-w-lg w-full bg-gray-800 p-8 rounded-lg shadow-lg"
-        initial={{ opacity: 0, y: 100 }}
+        className="max-w-lg w-full bg-gray-800 p-8 rounded-lg shadow-lg mb-20"
+        initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
+        transition={{ duration: 1 }}
       >
-        <h1 className="text-4xl font-bold mb-6 text-center">Contáctame</h1>
-        <form onSubmit={handleSubmit} noValidate>
-          <input
-            type="text"
-            name="honeypot"
-            value={formData.honeypot || ''}
-            onChange={handleChange}
-            style={{ display: 'none' }}
-          />
+        <h2 className="text-3xl font-bold mb-6 text-center">Contáctame</h2>
+        <form onSubmit={handleSubmit}>
+          {/* Campo Nombre */}
+          <div className="mb-4">
+            <label htmlFor="name" className="block text-gray-400 font-semibold mb-2">
+              Nombre
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg"
+            />
+          </div>
 
-          {/** Campo Nombre */}
-          <Field
-            id="name"
-            label="Nombre"
-            error={errors.name}
-            value={formData.name || ''}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            required
-          />
+          {/* Campo Email */}
+          <div className="mb-4">
+            <label htmlFor="email" className="block text-gray-400 font-semibold mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg"
+            />
+          </div>
 
-          {/** Campo Email */}
-          <Field
-            id="email"
-            label="Email"
-            error={errors.email}
-            value={formData.email || ''}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            required
-          />
+          {/* Campo Teléfono */}
+          <div className="mb-4">
+            <label htmlFor="phone" className="block text-gray-400 font-semibold mb-2">
+              Teléfono (opcional)
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg"
+            />
+          </div>
 
-          {/** Campo Teléfono (Opcional) */}
-          <Field
-            id="phone"
-            label="Teléfono (opcional)"
-            error={errors.phone}
-            value={formData.phone || ''}
-            onChange={handleChange}
-            onBlur={handleBlur}
-          />
+          {/* Campo Mensaje */}
+          <div className="mb-6">
+            <label htmlFor="message" className="block text-gray-400 font-semibold mb-2">
+              Mensaje
+            </label>
+            <textarea
+              id="message"
+              name="message"
+              value={formData.message}
+              onChange={handleChange}
+              required
+              rows="4"
+              className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg"
+            ></textarea>
+          </div>
 
-          {/** Campo Mensaje */}
-          <Field
-            id="message"
-            label="Mensaje"
-            error={errors.message}
-            value={formData.message || ''}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            textarea
-            required
-          />
-
+          {/* Botón de Enviar */}
           <motion.button
             type="submit"
-            className="w-full bg-blue-500 py-2 px-4 rounded-lg font-semibold"
+            className="w-full bg-blue-500 py-2 px-4 rounded-lg font-semibold text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 focus:outline-none"
             whileHover={{ scale: 1.05 }}
-            disabled={isLoading}
+            whileTap={{ scale: 0.95 }}
           >
-            {isLoading ? 'Enviando...' : 'Enviar'}
+            {loading ? 'Enviando...' : 'Enviar'}
           </motion.button>
         </form>
       </motion.div>
-      <ToastContainer />
+      <ToastContainer position="top-center" autoClose={3000} />
     </section>
   );
 };
 
 export default Contact;
-

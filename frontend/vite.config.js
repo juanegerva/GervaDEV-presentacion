@@ -9,10 +9,4 @@ export default defineConfig({
       external: ['framer-motion']['react-icons'] // Asegura que framer-motion se trate como dependencia externa
     }
   },
-  server: {
-    proxy: {
-      '/csrf-token': 'http://localhost:5000', // Proxy para obtener el token CSRF
-      '/send': 'http://localhost:5000', // Proxy para enviar datos al backend
-    },
-  },
 });
