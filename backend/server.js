@@ -59,15 +59,19 @@ app.get('/csrf-token', (req, res) => {
 
 // Ruta para manejar el formulario
 app.post('/send', (req, res) => {
+  const csrfToken = req.headers['csrf-token'];
   const { name, email, message } = req.body;
 
-  if (!name || !email || !message) {
-    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+  if (!csrfToken) {
+    return res.status(403).json({ error: 'Token CSRF no encontrado' });
   }
 
+  console.log('🔑 Token CSRF recibido en backend:', csrfToken);
   console.log('Formulario recibido:', { name, email, message });
+
   res.status(200).json({ message: 'Correo enviado con éxito' });
 });
+
 
 // Middleware de manejo de errores CSRF
 app.use((err, req, res, next) => {

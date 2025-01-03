@@ -30,8 +30,14 @@ const Contact = () => {
           credentials: 'include',
         });
         const data = await response.json();
-        setCsrfToken(data.csrfToken);
-        console.log('🔑 Token CSRF recibido:', data.csrfToken);
+        
+        if (data.csrfToken) {
+          localStorage.setItem('csrfToken', data.csrfToken);  // Guardar en localStorage
+          setCsrfToken(data.csrfToken);  // Guardar en estado
+          console.log('🔑 Token CSRF recibido y guardado:', data.csrfToken);
+        } else {
+          console.error('⚠️ No se recibió token CSRF válido');
+        }
       } catch (error) {
         console.error('❌ Error al obtener el token CSRF:', error);
       }
@@ -58,27 +64,35 @@ const Contact = () => {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const csrfToken = localStorage.getItem('csrfToken')
+     
     if (!validateForm()) return;
-
+  
     setLoading(true);
-    console.log("entre al POST")
-    console.log(csrfToken)
     
+    const csrfToke = csrfToken || localStorage.getItem('csrfToken');  // Reforzar lectura
+  
+    console.log("🔑 Token CSRF antes del POST:", csrfToke);
+  
+    if (!csrfToke) {
+      toast.error('Error: Token CSRF no encontrado.');
+      setLoading(false);
+      return;
+    }
+  
     try {
       const response = await fetch(`${BACKEND_URL}/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'CSRF-Token': csrfToken,
+          'CSRF-Token': csrfToke,
         },
         body: JSON.stringify(formData),
         credentials: 'include',
       });
-
+  
       const data = await response.json();
-    
-
+      console.log("RESPUESTA DEL SERVIDOR", data);
+  
       if (response.ok) {
         toast.success('¡Correo enviado con éxito!');
         setFormData({ name: '', email: '', phone: '', message: '' });
@@ -92,6 +106,7 @@ const Contact = () => {
       setLoading(false);
     }
   };
+  
 
   return (
     <section
