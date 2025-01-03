@@ -66,25 +66,17 @@ const Contact = () => {
     e.preventDefault();
   
     if (!validateForm()) return;
-  
     setLoading(true);
-    
-    const csrfToke = csrfToken || localStorage.getItem('csrfToken');  // Refuerzo por si el estado no guarda el token correctamente.
   
+    const csrfToke = localStorage.getItem('csrfToken');
     console.log("🔑 Token CSRF antes del POST:", csrfToke);
-  
-    if (!csrfToke) {
-      toast.error('Error: Token CSRF no encontrado.');
-      setLoading(false);
-      return;
-    }
   
     try {
       const response = await fetch(`${BACKEND_URL}/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'CSRF-Token': csrfToke,  // Enviar token desde el encabezado
+          'CSRF-Token': csrfToke,
         },
         body: JSON.stringify(formData),
         credentials: 'include',
@@ -106,6 +98,7 @@ const Contact = () => {
       setLoading(false);
     }
   };
+  
   
   
 
