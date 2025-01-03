@@ -64,7 +64,6 @@ const Contact = () => {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
     if (!validateForm()) return;
     setLoading(true);
   
@@ -76,7 +75,7 @@ const Contact = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'CSRF-Token': csrfToke,
+          'x-csrf-token': csrfToke,  // Aquí está el cambio (x-csrf-token)
         },
         body: JSON.stringify(formData),
         credentials: 'include',
@@ -97,7 +96,8 @@ const Contact = () => {
     } finally {
       setLoading(false);
     }
-  };
+};
+
   
   
   

@@ -41,9 +41,10 @@ app.use(cookieParser());
 const csrfProtection = csrf({
   cookie: true,
   value: (req) => {
-    return req.headers['csrf-token'] || req.body._csrf || req.query._csrf || '';
+    return req.headers['x-csrf-token'] || req.body._csrf || req.query._csrf || '';  // Aceptar x-csrf-token
   },
 });
+
 app.use(csrfProtection);
 
 
