@@ -18,17 +18,21 @@ const allowedOrigins = [
 app.use(helmet());
 
 
-// Configuración de CORS
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);  // Permitir la solicitud
+    if (!origin) {
+      return callback(null, true);  // Permitir solicitudes sin origen (Postman, Curl, etc.)
+    }
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);  // Permitir origen válido
     } else {
+      console.error(`❌ Origen no autorizado: ${origin}`);
       callback(new Error('No autorizado por CORS'));
     }
   },
   credentials: true,  // Permitir cookies y credenciales
 }));
+
 
 
 // Middleware
