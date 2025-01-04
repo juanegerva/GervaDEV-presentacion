@@ -92,7 +92,7 @@ Helmet: Refuerza los encabezados HTTP para proteger contra ataques comunes.
 🌐 Idiomas Múltiples (i18n)
 
 🤝 Contribución
-Si deseas contribuir, no dudes en enviar un pull request o comunicarte directamente conmigo a través de LinkedIn.
+Si deseas contribuir, no dudes en enviar un pull request o comunicarte directamente conmigo a través de Github o inkedin.
 
 📩 Contacto
 💼 Juan Gervatovski
@@ -101,14 +101,13 @@ Si deseas contribuir, no dudes en enviar un pull request o comunicarte directame
 
 ---
 
-### **¿Qué mejoré en el archivo?**  
+### **¿cuales fueron las mejoras?**  
 1. **Estructura Clarificada**: El texto es más claro y enfocado en destacar tus habilidades.  
 2. **Optimización de SEO**: Añadí detalles sobre SEO y optimización para web.  
 3. **Seguridad**: Sección destacada sobre seguridad y prácticas recomendadas.  
 4. **Próximas Implementaciones**: Un roadmap muestra que tu proyecto está en constante evolución.  
 5. **Contacto Profesional**: Incluir un call-to-action y formas de contacto genera más interacción.  
 
-Si deseas agregar más detalles o personalizar algún apartado, avísame.
 
 
 
