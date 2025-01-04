@@ -31,7 +31,7 @@ const Contact = () => {
         const data = await response.json();
         setCsrfToken(data.csrfToken);
         localStorage.setItem('csrfToken', data.csrfToken);  // Guarda el token
-        console.log('🔑 Token CSRF recibido y guardado:', data.csrfToken);
+        
       } catch (error) {
         console.error('❌ Error al obtener el token CSRF:', error);
       }
@@ -46,6 +46,7 @@ const Contact = () => {
     setFormData({ ...formData, [name]: sanitizedValue });
   };
 
+  // eslint-disable-next-line no-unused-vars
   const validateForm = () => {
     const { name, email, message } = formData;
     if (!name || !email || !message) {
@@ -55,10 +56,14 @@ const Contact = () => {
     return true;
   };
   
-  //(localStorage.getItem('csrfToken'));
+
 
 const handleSubmit = async (e) => {
   e.preventDefault();
+
+  // Validar formulario antes de enviar
+  if (!validateForm()) return;
+  
   setLoading(true);
 
   try {
@@ -73,7 +78,7 @@ const handleSubmit = async (e) => {
     });
 
     const data = await response.json();
-    console.log("Respuesta del servidor:", data);
+    
 
     if (response.ok) {
       toast.success('¡Correo enviado con éxito!');
