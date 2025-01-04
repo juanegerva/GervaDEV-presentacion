@@ -37,7 +37,7 @@ app.use(cors({
 // Middleware
 app.use(bodyParser.json());
 app.use(cookieParser());
-app.use(csrfProtection);
+
 
 // Configuración CSRF
 const csrfProtection = csrf({
@@ -52,7 +52,7 @@ const csrfProtection = csrf({
 });
 
 
-
+app.use(csrfProtection);
 
 
 
