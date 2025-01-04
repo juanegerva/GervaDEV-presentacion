@@ -23,28 +23,22 @@ const Contact = () => {
   // Obtener CSRF Token
   useEffect(() => {
     const fetchCsrfToken = async () => {
-      console.log("🔑 entre aca al fetch");
       try {
         const response = await fetch(`${BACKEND_URL}/csrf-token`, {
           method: 'GET',
           credentials: 'include',
         });
         const data = await response.json();
-        
-        if (data.csrfToken) {
-          localStorage.setItem('csrfToken', data.csrfToken);  // Guardar en localStorage
-          setCsrfToken(data.csrfToken);  // Guardar en estado
-          console.log('🔑 Token CSRF recibido y guardado:', data.csrfToken);
-        } else {
-          console.error('⚠️ No se recibió token CSRF válido');
-        }
+        setCsrfToken(data.csrfToken);
+        localStorage.setItem('csrfToken', data.csrfToken);  // Guarda el token
+        console.log('🔑 Token CSRF recibido y guardado:', data.csrfToken);
       } catch (error) {
         console.error('❌ Error al obtener el token CSRF:', error);
       }
     };
-
     fetchCsrfToken();
   }, []);
+  ;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -61,42 +55,40 @@ const Contact = () => {
     return true;
   };
 
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-    setLoading(true);
-  
-    const csrfToke = localStorage.getItem('csrfToken');
-    console.log("🔑 Token CSRF antes del POST:", csrfToke);
-  
-    try {
-      const response = await fetch(`${BACKEND_URL}/send`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-csrf-token': csrfToke,  // Aquí está el cambio (x-csrf-token)
-        },
-        body: JSON.stringify(formData),
-        credentials: 'include',
-      });
-  
-      const data = await response.json();
-      console.log("RESPUESTA DEL SERVIDOR", data);
-  
-      if (response.ok) {
-        toast.success('¡Correo enviado con éxito!');
-        setFormData({ name: '', email: '', phone: '', message: '' });
-      } else {
-        toast.error(data.error || 'Error al enviar el formulario.');
-      }
-    } catch (error) {
-      console.error('❌ Error:', error);
-      toast.error('Error al enviar el formulario.');
-    } finally {
-      setLoading(false);
+  setCsrfToken (localStorage.getItem('csrfToken'));
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/send`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-csrf-token': csrfToken,  // Asegúrate de enviar el token correcto
+      },
+      body: JSON.stringify(formData),
+      credentials: 'include',  // Para asegurarte de enviar cookies
+    });
+
+    const data = await response.json();
+    console.log("Respuesta del servidor:", data);
+
+    if (response.ok) {
+      toast.success('¡Correo enviado con éxito!');
+      setFormData({ name: '', email: '', phone: '', message: '' });
+    } else {
+      toast.error(data.error || 'Error al enviar el formulario.');
     }
+  } catch (error) {
+    console.error('❌ Error al enviar:', error);
+    toast.error('Error al enviar el formulario.');
+  } finally {
+    setLoading(false);
+  }
 };
+
 
   
   

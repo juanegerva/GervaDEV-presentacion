@@ -47,9 +47,10 @@ const csrfProtection = csrf({
     sameSite: 'Strict',
   },
   value: (req) => {
-    return req.headers['x-csrf-token'] || req.body._csrf || req.query._csrf || '';
+    return req.headers['x-csrf-token'] || req.cookies._csrf || '';
   },
 });
+
 
 
 app.use(csrfProtection);
@@ -59,10 +60,7 @@ app.use(csrfProtection);
 
 // Ruta para devolver el token CSRF
 app.get('/csrf-token', (req, res) => {
-  const csrfToken = req.csrfToken ? req.csrfToken() : null;
-  if (!csrfToken) {
-    return res.status(500).json({ error: 'No se pudo generar el token CSRF' });
-  }
+  const csrfToken = req.csrfToken();
   console.log('🔑 Token CSRF generado:', csrfToken);
   res.cookie('_csrf', csrfToken, {
     httpOnly: true,
@@ -71,6 +69,7 @@ app.get('/csrf-token', (req, res) => {
   });
   res.status(200).json({ csrfToken });
 });
+
 
 
 // Ruta para manejar el formulario
