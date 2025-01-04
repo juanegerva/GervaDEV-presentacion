@@ -54,8 +54,8 @@ const Contact = () => {
     }
     return true;
   };
-
-  setCsrfToken (localStorage.getItem('csrfToken'));
+  
+  //(localStorage.getItem('csrfToken'));
 
 const handleSubmit = async (e) => {
   e.preventDefault();
