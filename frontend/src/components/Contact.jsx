@@ -62,8 +62,8 @@ const handleSubmit = async (e) => {
   e.preventDefault();
 
   // Validar formulario antes de enviar
-  if (!validateForm()) return;
-  
+  //if (!validateForm()) return;
+
   setLoading(true);
 
   try {
