@@ -26,18 +26,19 @@ const Contact = () => {
       try {
         const response = await fetch(`${BACKEND_URL}/csrf-token`, {
           method: 'GET',
-          credentials: 'include',
+          credentials: 'include',  // Asegura que las cookies viajen con la solicitud
         });
         const data = await response.json();
         setCsrfToken(data.csrfToken);
-        localStorage.setItem('csrfToken', data.csrfToken);  // Guarda el token
-        
+        console.log('🔑 Token CSRF recibido:', data.csrfToken);
+        localStorage.setItem('csrfToken', data.csrfToken);  // Guarda el token en el navegador
       } catch (error) {
         console.error('❌ Error al obtener el token CSRF:', error);
       }
     };
     fetchCsrfToken();
   }, []);
+  
   ;
 
   const handleChange = (e) => {
