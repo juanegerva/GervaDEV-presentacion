@@ -11,6 +11,7 @@ export default defineConfig({
     outDir: 'dist', // Directorio de salida para producción
     rollupOptions: {
       external: ['framer-motion']['react-icons'] // Asegura que framer-motion se trate como dependencia externa
-    }
+    },
+    hunkSizeWarningLimit: 700, 
   },
 });
