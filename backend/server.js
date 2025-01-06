@@ -1,106 +1,68 @@
+// Importar dependencias
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const session = require('express-session');
 const csrf = require('csurf');
 const helmet = require('helmet');
 require('dotenv').config();
 
 const app = express();
 
-// Lista de orígenes permitidos
-const allowedOrigins = [
-  'https://gerva-dev.netlify.app',
-  'http://localhost:5173',
-  'https://mi-backend-u1pz.onrender.com',
-];
-
-// Permitir subdominios de Netlify dinámicamente
-const dynamicNetlifyOrigin = /^https:\/\/[a-zA-Z0-9-]+--gerva-dev\.netlify\.app$/;
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin) || dynamicNetlifyOrigin.test(origin)) {
-      callback(null, true);
-    } else {
-      console.error(`❌ Origen no autorizado: ${origin}`);
-      callback(new Error('No autorizado por CORS'));
-    }
+// Configuración de sesión
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'clave-por-defecto',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    httpOnly: true,
+    secure: false,
+    sameSite: 'Strict',
   },
-  credentials: true,
 }));
 
-
-// Aplica antes de definir rutas
-
-
-// Middleware
+// Configuración de seguridad
+app.use(helmet());
 app.use(bodyParser.json());
 app.use(cookieParser());
 
+// Configuración de CORS
+app.use(cors({
+  origin: 'https://gerva-dev.netlify.app',  // Cambia según tu frontend
+  credentials: true,
+}));
 
-// Configuración CSRF
+// Middleware CSRF
 const csrfProtection = csrf({
-  cookie: {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'Strict',
-  },
+  cookie: false,  // Usamos sesión en lugar de cookie
   value: (req) => {
-    return req.headers['x-csrf-token'] || req.cookies._csrf || '';
+    return req.headers['x-csrf-token'] || req.session.csrfToken;
   },
 });
+app.use(csrfProtection);  // IMPORTANTE: Aplicar CSRF a nivel global
 
-
-
-app.use(csrfProtection);
-
-
-
-
-// Ruta para devolver el token CSRF
+// Ruta para obtener el token CSRF
 app.get('/csrf-token', (req, res) => {
-  const csrfToken = req.csrfToken();
-  console.log('🔑 Token CSRF generado:', csrfToken);
-  res.cookie('_csrf', csrfToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'Strict',
-  });
-  res.status(200).json({ csrfToken });
-});
-
-
-
-// Ruta para manejar el formulario
-
-
-app.post('/send', (req, res) => {
-  const { name, email, message } = req.body;
-  console.log('Formulario recibido:', { name, email, message });
-  res.status(200).json({ message: 'Correo enviado con éxito' });
-});
-
-
-
-// Middleware de manejo de errores CSRF
-app.use((err, req, res, next) => {
-  if (err.code === 'EBADCSRFTOKEN') {
-    console.error('❌ Error CSRF: token no válido o ausente.');
-    return res.status(403).json({ error: 'Token CSRF inválido o ausente' });
+  try {
+    if (!req.session.csrfToken) {
+      req.session.csrfToken = req.csrfToken();  // Generar token CSRF
+    }
+    console.log('🔑 Token CSRF generado (sesión):', req.session.csrfToken);
+    res.status(200).json({ csrfToken: req.session.csrfToken });
+  } catch (error) {
+    console.error('❌ Error interno al generar el token CSRF:', error.message);
+    res.status(500).json({ error: 'Error interno al generar el token CSRF' });
   }
-  next(err);
 });
 
-
-app.use((req, res, next) => {
-  console.log("🔍 Token CSRF recibido en el servidor:", req.headers['csrf-token']);
-  next();
+// Ruta protegida para enviar formulario
+app.post('/send', csrfProtection, (req, res) => {
+  res.status(200).json({ message: 'Formulario enviado correctamente' });
 });
 
-
-// Puerto de escucha (usar el puerto de Render)
+// Puerto de escucha
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Servidor corriendo en http://0.0.0.0:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
 });
