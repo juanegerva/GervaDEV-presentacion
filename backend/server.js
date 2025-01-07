@@ -17,8 +17,8 @@ app.use(session({
   saveUninitialized: true,
   cookie: {
     httpOnly: true,
-    secure: true,  // Asegúrate de que sea true en producción (HTTPS)
-    sameSite: 'None',  // Permite cookies entre dominios
+    secure: true,  // HTTPS obligatorio en producción
+    sameSite: 'None',  // Permitir cookies entre dominios
   },
 }));
 
@@ -33,8 +33,9 @@ app.use(cors({
 
 // Middleware CSRF
 const csrfProtection = csrf({
-  cookie: false,  // Usamos sesión en lugar de cookies para almacenar CSRF
+  cookie: false,
   value: (req) => {
+    // Validar el token desde el encabezado, cookie o sesión
     return req.headers['x-csrf-token'] || req.cookies._csrf || req.session.csrfToken;
   },
 });
@@ -43,13 +44,13 @@ app.use(csrfProtection);  // Aplicar CSRF a todas las rutas protegidas
 // Ruta para obtener el token CSRF
 app.get('/csrf-token', (req, res) => {
   try {
-    // Si no existe token en la sesión, se genera uno
+    // Generar el token solo si no existe en la sesión
     if (!req.session.csrfToken) {
       req.session.csrfToken = req.csrfToken();
     }
     console.log('🔑 Token CSRF generado (sesión):', req.session.csrfToken);
 
-    // Establece la cookie CSRF y devuelve el token
+    // Establecer la cookie CSRF
     res.cookie('_csrf', req.session.csrfToken, {
       httpOnly: true,
       secure: true,
@@ -65,7 +66,7 @@ app.get('/csrf-token', (req, res) => {
 
 // Ruta para enviar el formulario
 app.post('/send', (req, res, next) => {
-  // Debug: Verifica tokens en sesión, encabezado y cookies
+  // Depuración: Verificar tokens en cada paso
   console.log('🔍 Token en Header (Frontend):', req.headers['x-csrf-token']);
   console.log('🔍 Token en Sesión (Backend):', req.session.csrfToken);
   console.log('🔍 Token en Cookie:', req.cookies._csrf);
