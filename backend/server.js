@@ -12,13 +12,13 @@ const app = express();
 
 // Configuración de sesión
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'clave-por-defecto',
+  secret: process.env.SESSION_SECRET || 'avefenix',
   resave: false,
   saveUninitialized: true,
   cookie: {
     httpOnly: true,
-    secure: true,  // HTTPS obligatorio en producción
-    sameSite: 'None',  // Permitir cookies entre dominios
+    secure: false,  // Desactiva secure temporalmente para pruebas locales
+    sameSite: 'None',
   },
 }));
 
