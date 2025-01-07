@@ -10,14 +10,25 @@ require('dotenv').config();
 
 const app = express();
 
+// Almacenamiento de sesión para producción (Evita MemoryStore en producción)
+const RedisStore = require('connect-redis').default;
+const { createClient } = require('redis');
+
+// Configuración de Redis
+const redisClient = createClient({
+  url: process.env.REDIS_URL || 'redis://localhost:5173',
+});
+redisClient.connect().catch(console.error);
+
 // Configuración de sesión
 app.use(session({
+  store: new RedisStore({ client: redisClient }),
   secret: process.env.SESSION_SECRET || 'avefenix',
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: false,  // Desactiva secure temporalmente para pruebas locales
+    secure: process.env.NODE_ENV === 'production',  // secure solo en producción
     sameSite: 'None',
   },
 }));
@@ -27,24 +38,23 @@ app.use(helmet());
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(cors({
-  origin: 'https://gerva-dev.netlify.app',  // Frontend permitido
+  origin: 'https://gerva-dev.netlify.app',  // Dominio permitido para el frontend
   credentials: true,
 }));
 
 // Middleware CSRF
 const csrfProtection = csrf({
   value: (req) => {
-    return req.cookies._csrf;
+    return req.cookies._csrf;  // Extraer el token CSRF de la cookie
   },
 });
 
-
-app.use(csrfProtection);  // Aplicar CSRF a todas las rutas protegidas
+app.use(csrfProtection);  // Aplicar protección CSRF a todas las rutas
 
 // Ruta para obtener el token CSRF
 app.get('/csrf-token', (req, res) => {
   try {
-    // Verifica si ya existe un token en la sesión
+    // Verifica si ya existe un token CSRF en la sesión
     if (!req.session.csrfToken) {
       req.session.csrfToken = req.csrfToken();
       console.log('🔑 Token CSRF generado (Backend):', req.session.csrfToken);
@@ -52,10 +62,10 @@ app.get('/csrf-token', (req, res) => {
       console.log('🔁 Reutilizando token CSRF existente:', req.session.csrfToken);
     }
 
-    // Envía el token en la cookie y como respuesta JSON
+    // Envía el token CSRF como cookie segura y como respuesta JSON
     res.cookie('_csrf', req.session.csrfToken, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'None',
     });
 
@@ -66,13 +76,9 @@ app.get('/csrf-token', (req, res) => {
   }
 });
 
-
-  
-
-
 // Ruta para enviar el formulario
 app.post('/send', (req, res, next) => {
-  // Depuración: Verificar tokens en cada paso
+  // Depuración: Verificar tokens
   console.log('🔍 Token en Header (Frontend):', req.headers['x-csrf-token']);
   console.log('🔍 Token en Sesión (Backend):', req.session.csrfToken);
   console.log('🔍 Token en Cookie:', req.cookies._csrf);
@@ -80,6 +86,7 @@ app.post('/send', (req, res, next) => {
 }, csrfProtection, (req, res) => {
   const { name, email, message } = req.body;
 
+  // Validación de campos
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Todos los campos son obligatorios' });
   }
