@@ -12,63 +12,83 @@ const app = express();
 
 // Configuración de sesión
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'avefenix',
+  secret: process.env.SESSION_SECRET || 'clave-por-defecto',
   resave: false,
   saveUninitialized: true,
   cookie: {
     httpOnly: true,
-    secure: true,
-    sameSite: 'None',
+    secure: true,  // Asegúrate de que sea true en producción (HTTPS)
+    sameSite: 'None',  // Permite cookies entre dominios
   },
 }));
 
-// Configuración de seguridad
+// Seguridad y configuración básica
 app.use(helmet());
 app.use(bodyParser.json());
 app.use(cookieParser());
-
-// Configuración de CORS
 app.use(cors({
-  origin: 'https://gerva-dev.netlify.app',  // Cambia según tu frontend
+  origin: 'https://gerva-dev.netlify.app',  // Frontend permitido
   credentials: true,
 }));
 
 // Middleware CSRF
 const csrfProtection = csrf({
-  cookie: false,
+  cookie: false,  // Usamos sesión en lugar de cookies para almacenar CSRF
   value: (req) => {
-    return req.headers['x-csrf-token'] || req.session.csrfToken;
+    return req.headers['x-csrf-token'] || req.cookies._csrf || req.session.csrfToken;
   },
 });
-app.use(csrfProtection);  // IMPORTANTE: Aplicar CSRF a nivel global
+app.use(csrfProtection);  // Aplicar CSRF a todas las rutas protegidas
 
 // Ruta para obtener el token CSRF
 app.get('/csrf-token', (req, res) => {
   try {
-    // Si el token no existe en la sesión, generar uno nuevo
+    // Si no existe token en la sesión, se genera uno
     if (!req.session.csrfToken) {
       req.session.csrfToken = req.csrfToken();
     }
     console.log('🔑 Token CSRF generado (sesión):', req.session.csrfToken);
 
-    // Almacenar el token en la cookie y devolverlo como JSON
+    // Establece la cookie CSRF y devuelve el token
     res.cookie('_csrf', req.session.csrfToken, {
       httpOnly: true,
-      secure: true,  // Importante para HTTPS
+      secure: true,
       sameSite: 'None',
     });
     
     res.status(200).json({ csrfToken: req.session.csrfToken });
   } catch (error) {
-    console.error('❌ Error interno al generar el token CSRF:', error.message);
+    console.error('❌ Error al generar token CSRF:', error.message);
     res.status(500).json({ error: 'Error interno al generar el token CSRF' });
   }
 });
 
+// Ruta para enviar el formulario
+app.post('/send', (req, res, next) => {
+  // Debug: Verifica tokens en sesión, encabezado y cookies
+  console.log('🔍 Token en Header (Frontend):', req.headers['x-csrf-token']);
+  console.log('🔍 Token en Sesión (Backend):', req.session.csrfToken);
+  console.log('🔍 Token en Cookie:', req.cookies._csrf);
+  next();
+}, csrfProtection, (req, res) => {
+  const { name, email, message } = req.body;
 
-// Ruta protegida para enviar formulario
-app.post('/send', csrfProtection, (req, res) => {
+  if (!name || !email || !message) {
+    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+  }
+
+  console.log('✅ Formulario recibido:', { name, email, message });
   res.status(200).json({ message: 'Formulario enviado correctamente' });
+});
+
+// Middleware para manejar errores CSRF
+app.use((err, req, res, next) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    console.error('❌ Error CSRF: Token no válido o ausente.');
+    res.status(403).json({ error: 'Token CSRF inválido o ausente' });
+  } else {
+    next(err);
+  }
 });
 
 // Puerto de escucha
