@@ -44,27 +44,26 @@ app.use(csrfProtection);  // Aplicar CSRF a todas las rutas protegidas
 // Ruta para obtener el token CSRF
 app.get('/csrf-token', (req, res) => {
   try {
-    // Genera el token solo si no existe en la sesión
+    // Solo genera el token si no existe en la sesión
     if (!req.session.csrfToken) {
       req.session.csrfToken = req.csrfToken();
     }
 
-    console.log('🔑 Token CSRF generado (sesión):', req.session.csrfToken);
-
-    // Guarda el token en una cookie segura
     res.cookie('_csrf', req.session.csrfToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'None',
     });
 
-    // Devuelve el token para ser usado en el frontend
     res.status(200).json({ csrfToken: req.session.csrfToken });
+    console.log('🔑 Token CSRF generado (Backend):', req.session.csrfToken);
   } catch (error) {
     console.error('❌ Error al generar token CSRF:', error.message);
     res.status(500).json({ error: 'Error interno al generar el token CSRF' });
   }
 });
+
+  
 
 
 // Ruta para enviar el formulario
