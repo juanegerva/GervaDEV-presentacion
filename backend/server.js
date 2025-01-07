@@ -1,4 +1,3 @@
-// Importar dependencias
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -10,11 +9,11 @@ require('dotenv').config();
 
 const app = express();
 
-// Almacenamiento de sesión para producción
-const RedisStore = require('connect-redis').default;  // CORRECCIÓN AQUÍ
+// Almacenamiento de sesión con Redis (para connect-redis v8+)
+const RedisStore = require('connect-redis').default;  // Importar con .default
 const { createClient } = require('redis');
 
-// Crear cliente Redis
+// Crear cliente Redis usando REDIS_URL
 const redisClient = createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6379',
 });
@@ -23,10 +22,10 @@ redisClient.connect().catch(console.error);
 
 // Configuración de sesión con RedisStore
 app.use(session({
-  store: new RedisStore({
-  client: redisClient,
-  prefix: "sess:",  // Opcional, puedes definir un prefijo para las sesiones
-  }),  // Uso correcto
+  store: RedisStore({  // Sin 'new'
+    client: redisClient,
+    prefix: "sess:",
+  }),
   secret: process.env.SESSION_SECRET || 'mi-secreto',
   resave: false,
   saveUninitialized: false,
@@ -36,7 +35,6 @@ app.use(session({
     sameSite: 'None',
   },
 }));
-
 
 // Seguridad y configuración básica
 app.use(helmet());
