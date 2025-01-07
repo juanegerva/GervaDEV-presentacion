@@ -11,7 +11,7 @@ require('dotenv').config();
 const app = express();
 
 // Almacenamiento de sesión para producción
-const RedisStore = require('connect-redis')(session);  // CORRECCIÓN AQUÍ
+const RedisStore = require('connect-redis').default;  // CORRECCIÓN AQUÍ
 const { createClient } = require('redis');
 
 // Crear cliente Redis
@@ -33,6 +33,7 @@ app.use(session({
     sameSite: 'None',
   },
 }));
+
 
 // Seguridad y configuración básica
 app.use(helmet());
