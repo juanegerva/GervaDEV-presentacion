@@ -71,27 +71,22 @@ app.get('/csrf-token', (req, res) => {
 
 
 // Ruta para enviar el formulario
-app.post('/send', (req, res) => {
-  console.log('🔍 Token en Header:', req.headers['x-csrf-token']);
-  console.log('🔍 Token en Sesión:', req.session.csrfToken);
+app.post('/send', (req, res, next) => {
+  // Depuración: Verificar tokens en cada paso
+  console.log('🔍 Token en Header (Frontend):', req.headers['x-csrf-token']);
+  console.log('🔍 Token en Sesión (Backend):', req.session.csrfToken);
+  console.log('🔍 Token en Cookie:', req.cookies._csrf);
+  next();
+}, csrfProtection, (req, res) => {
   const { name, email, message } = req.body;
 
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Todos los campos son obligatorios' });
   }
 
-  // Lógica de envío de formulario
+  console.log('✅ Formulario recibido:', { name, email, message });
   res.status(200).json({ message: 'Formulario enviado correctamente' });
 });
-
-
-  //if (!name || !email || !message) {
-    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
-  //}
-
-//  console.log('✅ Formulario recibido:', { name, email, message });
-//  res.status(200).json({ message: 'Formulario enviado correctamente' });
-//});
 
 // Middleware para manejar errores CSRF
 app.use((err, req, res, next) => {
