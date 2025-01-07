@@ -11,24 +11,31 @@ require('dotenv').config();
 const app = express();
 
 // Almacenamiento de sesión para producción (Evita MemoryStore en producción)
-const RedisStore = require('connect-redis').default;
+const RedisStore = require('connect-redis');
 const { createClient } = require('redis');
 
-// Configuración de Redis
+// Crear cliente Redis
 const redisClient = createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6379',
 });
+
 redisClient.connect().catch(console.error);
+
+// Crear instancia de RedisStore
+const redisStore = new RedisStore({
+  client: redisClient,
+  prefix: 'sess:',  // Prefijo opcional para sesiones
+});
 
 // Configuración de sesión
 app.use(session({
-  store: new RedisStore({ client: redisClient }),  // Se usa correctamente con 'client'
+  store: redisStore,
   secret: process.env.SESSION_SECRET || 'mi-secreto',
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',  // secure solo en producción
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'None',
   },
 }));
@@ -45,16 +52,15 @@ app.use(cors({
 // Middleware CSRF
 const csrfProtection = csrf({
   value: (req) => {
-    return req.cookies._csrf;  // Extraer el token CSRF de la cookie
+    return req.cookies._csrf;
   },
 });
 
-app.use(csrfProtection);  // Aplicar protección CSRF a todas las rutas
+app.use(csrfProtection);
 
 // Ruta para obtener el token CSRF
 app.get('/csrf-token', (req, res) => {
   try {
-    // Verifica si ya existe un token CSRF en la sesión
     if (!req.session.csrfToken) {
       req.session.csrfToken = req.csrfToken();
       console.log('🔑 Token CSRF generado (Backend):', req.session.csrfToken);
@@ -62,7 +68,6 @@ app.get('/csrf-token', (req, res) => {
       console.log('🔁 Reutilizando token CSRF existente:', req.session.csrfToken);
     }
 
-    // Envía el token CSRF como cookie segura y como respuesta JSON
     res.cookie('_csrf', req.session.csrfToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -78,7 +83,6 @@ app.get('/csrf-token', (req, res) => {
 
 // Ruta para enviar el formulario
 app.post('/send', (req, res, next) => {
-  // Depuración: Verificar tokens
   console.log('🔍 Token en Header (Frontend):', req.headers['x-csrf-token']);
   console.log('🔍 Token en Sesión (Backend):', req.session.csrfToken);
   console.log('🔍 Token en Cookie:', req.cookies._csrf);
@@ -86,7 +90,6 @@ app.post('/send', (req, res, next) => {
 }, csrfProtection, (req, res) => {
   const { name, email, message } = req.body;
 
-  // Validación de campos
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Todos los campos son obligatorios' });
   }
