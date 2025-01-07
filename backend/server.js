@@ -16,14 +16,14 @@ const { createClient } = require('redis');
 
 // Configuración de Redis
 const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:5173',
+  url: process.env.REDIS_URL || 'redis://localhost:6379',
 });
 redisClient.connect().catch(console.error);
 
 // Configuración de sesión
 app.use(session({
-  store: new RedisStore({ client: redisClient }),
-  secret: process.env.SESSION_SECRET || 'avefenix',
+  store: new RedisStore({ client: redisClient }),  // Se usa correctamente con 'client'
+  secret: process.env.SESSION_SECRET || 'mi-secreto',
   resave: false,
   saveUninitialized: false,
   cookie: {
