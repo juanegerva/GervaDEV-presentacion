@@ -35,7 +35,7 @@ app.use(cors({
 
 // Middleware CSRF
 const csrfProtection = csrf({
-  cookie: false,  // Usamos sesión en lugar de cookie
+  cookie: false,
   value: (req) => {
     return req.headers['x-csrf-token'] || req.session.csrfToken;
   },
@@ -45,16 +45,26 @@ app.use(csrfProtection);  // IMPORTANTE: Aplicar CSRF a nivel global
 // Ruta para obtener el token CSRF
 app.get('/csrf-token', (req, res) => {
   try {
+    // Si el token no existe en la sesión, generar uno nuevo
     if (!req.session.csrfToken) {
-      req.session.csrfToken = req.csrfToken();  // Generar token CSRF
+      req.session.csrfToken = req.csrfToken();
     }
     console.log('🔑 Token CSRF generado (sesión):', req.session.csrfToken);
+
+    // Almacenar el token en la cookie y devolverlo como JSON
+    res.cookie('_csrf', req.session.csrfToken, {
+      httpOnly: true,
+      secure: true,  // Importante para HTTPS
+      sameSite: 'None',
+    });
+    
     res.status(200).json({ csrfToken: req.session.csrfToken });
   } catch (error) {
     console.error('❌ Error interno al generar el token CSRF:', error.message);
     res.status(500).json({ error: 'Error interno al generar el token CSRF' });
   }
 });
+
 
 // Ruta protegida para enviar formulario
 app.post('/send', csrfProtection, (req, res) => {
