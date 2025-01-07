@@ -23,7 +23,10 @@ redisClient.connect().catch(console.error);
 
 // Configuración de sesión con RedisStore
 app.use(session({
-  store: new RedisStore({ client: redisClient }),  // Uso correcto
+  store: new RedisStore({
+  client: redisClient,
+  prefix: "sess:",  // Opcional, puedes definir un prefijo para las sesiones
+  }),  // Uso correcto
   secret: process.env.SESSION_SECRET || 'mi-secreto',
   resave: false,
   saveUninitialized: false,
