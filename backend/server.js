@@ -44,11 +44,15 @@ app.use(csrfProtection);  // Aplicar CSRF a todas las rutas protegidas
 // Ruta para obtener el token CSRF
 app.get('/csrf-token', (req, res) => {
   try {
-    // Solo genera el token si no existe en la sesión
+    // Verifica si ya existe un token en la sesión
     if (!req.session.csrfToken) {
       req.session.csrfToken = req.csrfToken();
+      console.log('🔑 Token CSRF generado (Backend):', req.session.csrfToken);
+    } else {
+      console.log('🔁 Reutilizando token CSRF existente:', req.session.csrfToken);
     }
 
+    // Envía el token en la cookie y como respuesta JSON
     res.cookie('_csrf', req.session.csrfToken, {
       httpOnly: true,
       secure: true,
@@ -56,33 +60,32 @@ app.get('/csrf-token', (req, res) => {
     });
 
     res.status(200).json({ csrfToken: req.session.csrfToken });
-    console.log('🔑 Token CSRF generado (Backend):', req.session.csrfToken);
   } catch (error) {
     console.error('❌ Error al generar token CSRF:', error.message);
     res.status(500).json({ error: 'Error interno al generar el token CSRF' });
   }
 });
 
+
   
 
 
 // Ruta para enviar el formulario
 app.post('/send', (req, res, next) => {
-  // Depuración: Verificar tokens en cada paso
-  console.log('🔍 Token en Header (Frontend):', req.headers['x-csrf-token']);
-  console.log('🔍 Token en Sesión (Backend):', req.session.csrfToken);
-  console.log('🔍 Token en Cookie:', req.cookies._csrf);
+  console.log('🔍 Token en Header:', req.headers['x-csrf-token']);
+  console.log('🔍 Token en Sesión:', req.session.csrfToken);
   next();
 }, csrfProtection, (req, res) => {
-  const { name, email, message } = req.body;
-
-  if (!name || !email || !message) {
-    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
-  }
-
-  console.log('✅ Formulario recibido:', { name, email, message });
   res.status(200).json({ message: 'Formulario enviado correctamente' });
 });
+
+  //if (!name || !email || !message) {
+    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+  //}
+
+//  console.log('✅ Formulario recibido:', { name, email, message });
+//  res.status(200).json({ message: 'Formulario enviado correctamente' });
+//});
 
 // Middleware para manejar errores CSRF
 app.use((err, req, res, next) => {
