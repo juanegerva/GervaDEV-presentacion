@@ -10,26 +10,20 @@ require('dotenv').config();
 
 const app = express();
 
-// Almacenamiento de sesión para producción (Evita MemoryStore en producción)
-const RedisStore = require('connect-redis');
+// Almacenamiento de sesión para producción
+const RedisStore = require('connect-redis')(session);  // CORRECCIÓN AQUÍ
 const { createClient } = require('redis');
 
 // Crear cliente Redis
 const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
+  url: process.env.REDIS_URL || 'redis://localhost:10000',
 });
 
 redisClient.connect().catch(console.error);
 
-// Crear instancia de RedisStore
-const redisStore = new RedisStore({
-  client: redisClient,
-  prefix: 'sess:',  // Prefijo opcional para sesiones
-});
-
-// Configuración de sesión
+// Configuración de sesión con RedisStore
 app.use(session({
-  store: redisStore,
+  store: new RedisStore({ client: redisClient }),  // NO QUITAR 'new'
   secret: process.env.SESSION_SECRET || 'mi-secreto',
   resave: false,
   saveUninitialized: false,
@@ -45,7 +39,7 @@ app.use(helmet());
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(cors({
-  origin: 'https://gerva-dev.netlify.app',  // Dominio permitido para el frontend
+  origin: 'https://gerva-dev.netlify.app',
   credentials: true,
 }));
 
