@@ -33,11 +33,11 @@ app.use(cors({
 
 // Middleware CSRF
 const csrfProtection = csrf({
-  cookie: false,
   value: (req) => {
-    return req.headers['x-csrf-token'] || req.cookies._csrf || req.session.csrfToken;
+    return req.cookies._csrf;
   },
 });
+
 
 app.use(csrfProtection);  // Aplicar CSRF a todas las rutas protegidas
 
