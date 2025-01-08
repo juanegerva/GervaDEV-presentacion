@@ -1,51 +1,64 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const cookieParser = require('cookie-parser');
-const helmet = require('helmet');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-// Inicializar la aplicación de Express
 const app = express();
 
-// Configuración de seguridad básica
-app.use(helmet());
+// Middleware
 app.use(bodyParser.json());
-app.use(cookieParser());
-
-// Configuración de CORS (Permite solicitudes desde Netlify)
 app.use(cors({
-  origin: 'https://gerva-dev.netlify.app',  // Reemplaza con el dominio de tu frontend
-  credentials: true,  // Permite enviar cookies de sesión
+  origin: 'https://gerva-dev.netlify.app',  // Cambiar al dominio del frontend
+  credentials: true,
 }));
 
-// Middleware para asegurarse de que todas las solicitudes OPTIONS sean aceptadas
-app.options('*', cors());
-
-// Añadir encabezados CORS manualmente (por si acaso)
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://gerva-dev.netlify.app");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  res.header("Access-Control-Allow-Credentials", "true");
-  next();
+// Configuración de transporte para envío de correos
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
-// Ruta simple para probar que el servidor funciona
+// Función para enviar correo
+async function enviarCorreo({ name, email, message }) {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: process.env.EMAIL_RECEIVER,
+    subject: `Nuevo mensaje de ${name}`,
+    text: `Nombre: ${name}\nCorreo: ${email}\nMensaje: ${message}`,
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Correo enviado:', info.response);
+  } catch (error) {
+    console.error('❌ Error al enviar el correo:', error);
+    throw new Error('Error al enviar el correo.');
+  }
+}
+
+// Ruta de prueba
 app.get('/', (req, res) => {
   res.send('Servidor funcionando correctamente 🚀');
 });
 
-// Ruta para enviar el formulario (sin CSRF)
-app.post('/send', (req, res) => {
+// Ruta para manejar el formulario
+app.post('/send', async (req, res) => {
   const { name, email, message } = req.body;
 
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Todos los campos son obligatorios' });
   }
 
-  console.log('✅ Formulario recibido:', { name, email, message });
-  res.status(200).json({ message: 'Formulario enviado correctamente' });
+  try {
+    await enviarCorreo({ name, email, message });
+    res.status(200).json({ message: 'Formulario enviado correctamente y correo enviado' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al enviar el correo' });
+  }
 });
 
 // Puerto de escucha
