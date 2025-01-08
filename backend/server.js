@@ -7,13 +7,11 @@ const csrf = require('csurf');
 const helmet = require('helmet');
 require('dotenv').config();
 
-const app = express();
-
-// Almacenamiento de sesión con Redis (para connect-redis v5)
+// Importar connect-redis y crear cliente Redis
 const RedisStore = require('connect-redis')(session);
 const { createClient } = require('redis');
 
-// Crear cliente Redis usando REDIS_URL
+// Crear cliente Redis
 const redisClient = createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6379',
 });
@@ -22,13 +20,14 @@ redisClient.connect()
   .then(() => console.log('✅ Conectado a Redis'))
   .catch((err) => console.error('❌ Error de conexión a Redis:', err));
 
-//redisClient.connect().catch(console.error);
+// Inicializar la aplicación de Express
+const app = express();
 
-// Configuración de sesión con RedisStore (Usando 'new')
+// Configuración de sesión con RedisStore
 app.use(session({
   store: new RedisStore({
     client: redisClient,
-    prefix: "sess:",
+    prefix: 'sess:',
   }),
   secret: process.env.SESSION_SECRET || 'mi-secreto',
   resave: false,
@@ -37,7 +36,7 @@ app.use(session({
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'None',
-  },
+  }
 }));
 
 // Seguridad y configuración básica
@@ -45,7 +44,7 @@ app.use(helmet());
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(cors({
-  origin: 'https://gerva-dev.netlify.app',
+  origin: 'https://gerva-dev.netlify.app',  // Cambia esto al dominio de tu frontend
   credentials: true,
 }));
 
@@ -68,13 +67,16 @@ app.get('/csrf-token', (req, res) => {
       console.log('🔁 Reutilizando token CSRF existente:', req.session.csrfToken);
     }
 
-    res.cookie('_csrf', req.session.csrfToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'None',
-    });
-
-    res.status(200).json({ csrfToken: req.session.csrfToken });
+    if (req.session.csrfToken) {
+      res.cookie('_csrf', req.session.csrfToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'None',
+      });
+      res.status(200).json({ csrfToken: req.session.csrfToken });
+    } else {
+      throw new Error('Token CSRF inválido');
+    }
   } catch (error) {
     console.error('❌ Error al generar token CSRF:', error.message);
     res.status(500).json({ error: 'Error interno al generar el token CSRF' });
