@@ -14,6 +14,9 @@ const { createClient } = require('redis');
 // Crear cliente Redis
 const redisClient = createClient({
   url: process.env.REDIS_URL,
+  socket: {
+    tls: true,  // Habilita TLS para rediss:// conexiones seguras
+  }
 });
 
 redisClient.connect()
