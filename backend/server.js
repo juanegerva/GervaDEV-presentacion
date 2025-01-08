@@ -9,21 +9,21 @@ const app = express();
 // Middleware
 app.use(bodyParser.json());
 app.use(cors({
-  origin: 'https://gerva-dev.netlify.app',  // Cambiar al dominio del frontend
+  origin: ['https://gerva-dev.netlify.app', 'http://localhost:5173/'],  // Cambiar al dominio del frontend
   credentials: true,
 }));
 
 // Configuración de transporte para envío de correos
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,  // true para 465, false para otros puertos
+  port: 465,  // Cambiado a SSL
+  secure: true,  // true para SSL
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
   tls: {
-    rejectUnauthorized: false,
+    rejectUnauthorized: false,  // Desactiva la verificación estricta de certificados
   },
 });
 

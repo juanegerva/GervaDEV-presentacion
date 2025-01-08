@@ -16,8 +16,8 @@ router.post('/send', async (req, res) => {
     // Configuración del transporte de correo (SMTP)
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
-      port: 465,
-      secure: true, // true para SSL
+      port: 465,  // Puerto para SSL
+      secure: true,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
