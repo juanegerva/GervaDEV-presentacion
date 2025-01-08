@@ -9,8 +9,8 @@ require('dotenv').config();
 
 const app = express();
 
-// Almacenamiento de sesión con Redis (para connect-redis v8+)
-const RedisStore = require('connect-redis').default;  // Importar con .default
+// Almacenamiento de sesión con Redis (para connect-redis v5)
+const RedisStore = require('connect-redis')(session);
 const { createClient } = require('redis');
 
 // Crear cliente Redis usando REDIS_URL
@@ -18,11 +18,15 @@ const redisClient = createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6379',
 });
 
-redisClient.connect().catch(console.error);
+redisClient.connect()
+  .then(() => console.log('✅ Conectado a Redis'))
+  .catch((err) => console.error('❌ Error de conexión a Redis:', err));
 
-// Configuración de sesión con RedisStore
+//redisClient.connect().catch(console.error);
+
+// Configuración de sesión con RedisStore (Usando 'new')
 app.use(session({
-  store: RedisStore({  // Sin 'new'
+  store: new RedisStore({
     client: redisClient,
     prefix: "sess:",
   }),
