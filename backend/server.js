@@ -15,9 +15,8 @@ const { createClient } = require('redis');
 const redisClient = createClient({
   url: process.env.REDIS_URL,
   socket: {
-    tls: true,  // Activar TLS
-    reconnectStrategy: retries => Math.min(retries * 500, 3000),  // Estrategia de reintento
-    rejectUnauthorized: false  // Evita errores de certificados autofirmados (usar solo en desarrollo)
+    tls: true,
+    reconnectStrategy: retries => Math.min(retries * 500, 3000),
   }
 });
 
@@ -29,6 +28,7 @@ redisClient.on('error', (err) => {
 redisClient.connect()
   .then(() => console.log('✅ Conectado a Redis'))
   .catch((err) => console.error('❌ Error de conexión a Redis:', err));
+
 
 // Inicializar la aplicación de Express
 const app = express();
