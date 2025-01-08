@@ -1,12 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import DOMPurify from 'dompurify';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// URL del backend (Render)
-const BACKEND_URL = 'https://mi-backend-u1pz.onrender.com'; // No localhost:5000
-
+const BACKEND_URL = 'https://mi-backend-u1pz.onrender.com';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -15,90 +13,46 @@ const Contact = () => {
     phone: '',
     message: '',
   });
-  const [csrfToken, setCsrfToken] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
+    try {
+      const response = await fetch(`${BACKEND_URL}/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-  // Obtener CSRF Token
-  useEffect(() => {
-    const fetchCsrfToken = async () => {
-      try {
-        const response = await fetch(`${BACKEND_URL}/csrf-token`, {
-          method: 'GET',
-          credentials: 'include',  // Asegura que las cookies viajen con la solicitud
+      const data = await response.json();
+      if (response.ok) {
+        toast.success('¡Formulario enviado con éxito!');
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          message: '',
         });
-        const data = await response.json();
-        setCsrfToken(data.csrfToken);
-        console.log('🔑 Token CSRF recibido:', data.csrfToken);
-        localStorage.setItem('csrfToken', data.csrfToken);  // Guarda el token en el navegador
-      } catch (error) {
-        console.error('❌ Error al obtener el token CSRF:', error);
+      } else {
+        toast.error(data.error || 'Error al enviar el formulario.');
       }
-    };
-    fetchCsrfToken();
-  }, []);
-  
-  ;
+    } catch (error) {
+      console.error('Error al enviar:', error);
+      toast.error('Error inesperado. Verifica el servidor.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     const sanitizedValue = DOMPurify.sanitize(value);
     setFormData({ ...formData, [name]: sanitizedValue });
   };
-
-  // eslint-disable-next-line no-unused-vars
-  const validateForm = () => {
-    const { name, email, message } = formData;
-    if (!name || !email || !message) {
-      toast.error('Todos los campos obligatorios deben ser completados.');
-      return false;
-    }
-    return true;
-  };
-  
-
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  // Validar formulario antes de enviar
-  //if (!validateForm()) return;
-
-  setLoading(true);
-
-  try {
-    const response = await fetch(`${BACKEND_URL}/send`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-csrf-token': csrfToken,  // Asegúrate de enviar el token correcto
-      },
-      body: JSON.stringify(formData),
-      credentials: 'include',  // Para asegurarte de enviar cookies
-    });
-
-    const data = await response.json();
-    
-
-    if (response.ok) {
-      toast.success('¡Correo enviado con éxito!');
-      setFormData({ name: '', email: '', phone: '', message: '' });
-    } else {
-      toast.error(data.error || 'Error al enviar el formulario.');
-    }
-  } catch (error) {
-    console.error('❌ Error al enviar:', error);
-    toast.error('Error al enviar el formulario.');
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  
-  
-  
 
   return (
     <section
@@ -113,7 +67,6 @@ const handleSubmit = async (e) => {
       >
         <h2 className="text-3xl font-bold mb-6 text-center">Contáctame</h2>
         <form onSubmit={handleSubmit}>
-          {/* Campo Nombre */}
           <div className="mb-4">
             <label htmlFor="name" className="block text-gray-400 font-semibold mb-2">
               Nombre
@@ -128,8 +81,6 @@ const handleSubmit = async (e) => {
               className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg"
             />
           </div>
-
-          {/* Campo Email */}
           <div className="mb-4">
             <label htmlFor="email" className="block text-gray-400 font-semibold mb-2">
               Email
@@ -144,8 +95,6 @@ const handleSubmit = async (e) => {
               className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg"
             />
           </div>
-
-          {/* Campo Teléfono */}
           <div className="mb-4">
             <label htmlFor="phone" className="block text-gray-400 font-semibold mb-2">
               Teléfono (opcional)
@@ -159,8 +108,6 @@ const handleSubmit = async (e) => {
               className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg"
             />
           </div>
-
-          {/* Campo Mensaje */}
           <div className="mb-6">
             <label htmlFor="message" className="block text-gray-400 font-semibold mb-2">
               Mensaje
@@ -175,13 +122,12 @@ const handleSubmit = async (e) => {
               className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg"
             ></textarea>
           </div>
-
-          {/* Botón de Enviar */}
           <motion.button
             type="submit"
             className="w-full bg-blue-500 py-2 px-4 rounded-lg font-semibold text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 focus:outline-none"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            disabled={loading}
           >
             {loading ? 'Enviando...' : 'Enviar'}
           </motion.button>
@@ -193,3 +139,4 @@ const handleSubmit = async (e) => {
 };
 
 export default Contact;
+

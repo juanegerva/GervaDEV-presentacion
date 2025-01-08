@@ -1,17 +1,16 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// https://vite.dev/config/
+// Configuración de Vite
 export default defineConfig({
   plugins: [react()],
-  define: {
-  'process.env.NODE_ENV': '"development"',
-},
-  build: {
-    outDir: 'dist', // Directorio de salida para producción
-    rollupOptions: {
-      external: ['framer-motion']['react-icons'] // Asegura que framer-motion se trate como dependencia externa
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://mi-backend-u1pz.onrender.com',
+        changeOrigin: true,
+        secure: false,
+      },
     },
-    hunkSizeWarningLimit: 700, 
   },
 });
