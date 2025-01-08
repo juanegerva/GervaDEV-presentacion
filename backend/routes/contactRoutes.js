@@ -1,50 +1,43 @@
 const express = require('express');
-const nodemailer = require('nodemailer');
 const router = express.Router();
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-// Ruta para enviar correos desde el formulario
-router.post('/send', async (req, res) => {
-  const { name, email, message, phone } = req.body;
+// Configuración del transporter (igual que en MailTest)
+const transporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
-  // Validación de campos obligatorios
+router.post('/send', (req, res) => {
+  const { name, email, message } = req.body;
+
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Todos los campos son obligatorios' });
   }
 
-  try {
-    // Configuración del transporte de correo (SMTP)
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,  // Puerto para SSL
-      secure: true,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: process.env.EMAIL_RECEIVER,
+    subject: `Nuevo mensaje de ${name}`,
+    text: `Nombre: ${name}\nEmail: ${email}\nMensaje: ${message}`,
+  };
 
-    // Configuración del correo
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_TO || "juanegerva@gmail.com",
-      subject: 'Nuevo Mensaje desde el Formulario',
-      text: `
-        Nombre: ${name}
-        Email: ${email}
-        Teléfono: ${phone || 'No proporcionado'}
-        Mensaje: ${message}
-      `,
-    };
-
-    // Enviar correo
-    const info = await transporter.sendMail(mailOptions);
-    console.log('📩 Correo enviado con éxito:', info.response);
-    res.status(200).json({ message: 'Correo enviado correctamente' });
-  } catch (error) {
-    console.error('❌ Error al enviar el correo:', error.message);
-    res.status(500).json({ error: 'Error al enviar el correo' });
-  }
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('❌ Error al enviar el correo:', error);
+      return res.status(500).json({ error: 'Error al enviar el correo.' });
+    } else {
+      console.log('✅ Correo enviado:', info.response);
+      return res.status(200).json({ message: 'Correo enviado con éxito.' });
+    }
+  });
 });
 
 module.exports = router;
+

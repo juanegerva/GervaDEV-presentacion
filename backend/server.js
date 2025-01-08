@@ -1,70 +1,18 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
+const contactRoutes = require('./routes/contactRoutes');
 require('dotenv').config();
 
+// Inicializar la aplicación de Express
 const app = express();
 
-// Middleware
+// Configuración básica de seguridad y middleware
+app.use(cors());
 app.use(bodyParser.json());
-app.use(cors({
-  origin: ['https://gerva-dev.netlify.app', 'http://localhost:5173/'],  // Cambiar al dominio del frontend
-  credentials: true,
-}));
 
-// Configuración de transporte para envío de correos
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,  // Cambiado a SSL
-  secure: true,  // true para SSL
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,  // Desactiva la verificación estricta de certificados
-  },
-});
-
-// Función para enviar correo
-async function enviarCorreo({ name, email, message }) {
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: process.env.EMAIL_RECEIVER,
-    subject: `Nuevo mensaje de ${name}`,
-    text: `Nombre: ${name}\nCorreo: ${email}\nMensaje: ${message}`,
-  };
-
-  try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Correo enviado:', info.response);
-  } catch (error) {
-    console.error('❌ Error al enviar el correo:', error);
-    throw new Error('Error al enviar el correo.');
-  }
-}
-
-// Ruta de prueba
-app.get('/', (req, res) => {
-  res.send('Servidor funcionando correctamente 🚀');
-});
-
-// Ruta para manejar el formulario
-app.post('/send', async (req, res) => {
-  const { name, email, message } = req.body;
-
-  if (!name || !email || !message) {
-    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
-  }
-
-  try {
-    await enviarCorreo({ name, email, message });
-    res.status(200).json({ message: 'Formulario enviado correctamente y correo enviado' });
-  } catch (error) {
-    res.status(500).json({ error: 'Error al enviar el correo' });
-  }
-});
+// Rutas
+app.use('/', contactRoutes);
 
 // Puerto de escucha
 const PORT = process.env.PORT || 5000;
