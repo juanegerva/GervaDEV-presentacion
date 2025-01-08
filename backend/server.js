@@ -11,12 +11,19 @@ require('dotenv').config();
 const RedisStore = require('connect-redis')(session);
 const { createClient } = require('redis');
 
-// Crear cliente Redis
+// Crear cliente Redis con TLS habilitado
 const redisClient = createClient({
   url: process.env.REDIS_URL,
   socket: {
-    tls: true,  // Habilita TLS para rediss:// conexiones seguras
+    tls: true,  // Activar TLS
+    reconnectStrategy: retries => Math.min(retries * 500, 3000),  // Estrategia de reintento
+    rejectUnauthorized: false  // Evita errores de certificados autofirmados (usar solo en desarrollo)
   }
+});
+
+// Manejo de errores en la conexión Redis
+redisClient.on('error', (err) => {
+  console.error('❌ Error de conexión a Redis:', err);
 });
 
 redisClient.connect()
@@ -53,9 +60,7 @@ app.use(cors({
 
 // Middleware CSRF
 const csrfProtection = csrf({
-  value: (req) => {
-    return req.cookies._csrf;
-  },
+  value: (req) => req.cookies._csrf,
 });
 
 app.use(csrfProtection);
