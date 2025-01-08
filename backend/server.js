@@ -15,14 +15,18 @@ const { createClient } = require('redis');
 const redisClient = createClient({
   url: process.env.REDIS_URL,
   socket: {
-    tls: true,
+    tls: true,  // Asegura que la conexión use TLS
     reconnectStrategy: retries => Math.min(retries * 500, 3000),
+    rejectUnauthorized: false,  // Desactiva la verificación de certificados
   }
 });
 
 // Manejo de errores en la conexión Redis
 redisClient.on('error', (err) => {
   console.error('❌ Error de conexión a Redis:', err);
+  setTimeout(() => {
+    redisClient.connect();
+  }, 5000);  // Reintentar cada 5 segundos
 });
 
 redisClient.connect()
