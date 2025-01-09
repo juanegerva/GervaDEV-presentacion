@@ -30,7 +30,7 @@ const Footer = () => {
             className="text-2xl font-bold text-blue-500"
             aria-label="Volver a la página principal"
           >
-            Portafolio
+            GERVA DEV
           </a>
         </div>
 

@@ -13,10 +13,36 @@ const Contact = () => {
     phone: '',
     message: '',
   });
+
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (formData.name.trim().length < 3 || /\d/.test(formData.name)) {
+      newErrors.name = 'El nombre debe tener al menos 3 letras y no incluir números.';
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      newErrors.email = 'Introduce un correo electrónico válido.';
+    }
+    if (formData.message.trim().length < 10) {
+      newErrors.message = 'El mensaje debe tener al menos 10 caracteres.';
+    }
+    const phoneRegex = /^[0-9.-]*$/u;
+    if (formData.phone && !phoneRegex.test(formData.phone)) {
+      newErrors.phone = 'El teléfono debe contener solo números, puntos o guiones.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     setLoading(true);
 
     try {
@@ -37,6 +63,7 @@ const Contact = () => {
           phone: '',
           message: '',
         });
+        setErrors({});
       } else {
         toast.error(data.error || 'Error al enviar el formulario.');
       }
@@ -66,7 +93,7 @@ const Contact = () => {
         transition={{ duration: 1 }}
       >
         <h2 className="text-3xl font-bold mb-6 text-center">Contáctame</h2>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <div className="mb-4">
             <label htmlFor="name" className="block text-gray-400 font-semibold mb-2">
               Nombre
@@ -80,6 +107,7 @@ const Contact = () => {
               required
               className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg"
             />
+            {errors.name && <p className="text-red-500 text-sm mt-2">{errors.name}</p>}
           </div>
           <div className="mb-4">
             <label htmlFor="email" className="block text-gray-400 font-semibold mb-2">
@@ -94,6 +122,7 @@ const Contact = () => {
               required
               className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg"
             />
+            {errors.email && <p className="text-red-500 text-sm mt-2">{errors.email}</p>}
           </div>
           <div className="mb-4">
             <label htmlFor="phone" className="block text-gray-400 font-semibold mb-2">
@@ -107,6 +136,7 @@ const Contact = () => {
               onChange={handleChange}
               className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg"
             />
+            {errors.phone && <p className="text-red-500 text-sm mt-2">{errors.phone}</p>}
           </div>
           <div className="mb-6">
             <label htmlFor="message" className="block text-gray-400 font-semibold mb-2">
@@ -121,6 +151,7 @@ const Contact = () => {
               rows="4"
               className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg"
             ></textarea>
+            {errors.message && <p className="text-red-500 text-sm mt-2">{errors.message}</p>}
           </div>
           <motion.button
             type="submit"
@@ -139,4 +170,3 @@ const Contact = () => {
 };
 
 export default Contact;
-
