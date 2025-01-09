@@ -30,7 +30,7 @@ const Contact = () => {
     if (formData.message.trim().length < 10) {
       newErrors.message = 'El mensaje debe tener al menos 10 caracteres.';
     }
-    const phoneRegex = /^[0-9.-]*$/u;
+    const phoneRegex = /^[0-9.-]*$/;
     if (formData.phone && !phoneRegex.test(formData.phone)) {
       newErrors.phone = 'El teléfono debe contener solo números, puntos o guiones.';
     }
@@ -54,19 +54,20 @@ const Contact = () => {
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
-      if (response.ok) {
-        toast.success('¡Formulario enviado con éxito!');
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          message: '',
-        });
-        setErrors({});
-      } else {
-        toast.error(data.error || 'Error al enviar el formulario.');
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast.error(errorData.error || 'Error al enviar el formulario.');
+        return;
       }
+
+      toast.success('¡Formulario enviado con éxito!');
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        message: '',
+      });
+      setErrors({});
     } catch (error) {
       console.error('Error al enviar:', error);
       toast.error('Error inesperado. Verifica el servidor.');
@@ -126,7 +127,7 @@ const Contact = () => {
           </div>
           <div className="mb-4">
             <label htmlFor="phone" className="block text-gray-400 font-semibold mb-2">
-              Teléfono (opcional)
+              Teléfono
             </label>
             <input
               type="tel"
@@ -170,3 +171,4 @@ const Contact = () => {
 };
 
 export default Contact;
+
