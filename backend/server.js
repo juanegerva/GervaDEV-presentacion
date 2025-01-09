@@ -14,7 +14,7 @@ app.use(cors({
 
 // Ruta para enviar el formulario
 app.post('/send', (req, res) => {
-  const { name, email, message } = req.body;
+  const { name, email, phone, message } = req.body;
 
   if (!name || !email || !message) {
     console.error('❌ Todos los campos son obligatorios.');
@@ -22,7 +22,7 @@ app.post('/send', (req, res) => {
   }
 
   // Simulación de recepción de datos en el servidor
-  console.log('✅ Formulario recibido:', { name, email, message });
+  console.log('✅ Formulario recibido:', { name, email, phone, message });
 
   // Aquí puedes agregar lógica futura para enviar correos
   return res.status(200).json({ message: 'Formulario recibido correctamente' });
